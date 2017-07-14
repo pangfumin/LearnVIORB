@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-filepath = '/home/jp/opensourcecode/OpenSourceORBVIO/tmp/';
+filepath = '/home/pang/software/LearnVIORB/tem_result/';
 
 biasa = np.loadtxt(filepath+'biasa.txt');
 plt.figure(1);

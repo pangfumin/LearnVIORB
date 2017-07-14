@@ -30,7 +30,7 @@ public:
     static double getGyrBiasRW2(void) {return _gyrBiasRw2;}
     static double getAccBiasRW2(void) {return _accBiasRw2;}
 
-
+    IMUData(){};
     IMUData(const double& gx, const double& gy, const double& gz,
             const double& ax, const double& ay, const double& az,
             const double& t);
