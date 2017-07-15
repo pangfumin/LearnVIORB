@@ -67,24 +67,14 @@ src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
 
-include/Frame.h
-include/KeyFrame.h
-include/Tracking.h
-include/LocalMapping.h
-
-src/IMU/configparam.h
 src/IMU/configparam.cpp
-
-src/IMU/imudata.h
 src/IMU/imudata.cpp
-src/IMU/IMUPreintegrator.h
+
 src/IMU/IMUPreintegrator.cpp
 src/IMU/so3.cpp
-src/IMU/so3.h
-src/IMU/NavState.h
+
 src/IMU/NavState.cpp
 
-src/IMU/g2otypes.h
 src/IMU/g2otypes.cpp
 )
 
@@ -100,7 +90,30 @@ ${BLAS_LIBRARIES}
 ${LAPACK_LIBRARIES}
 )
 
-## Build examples
+
+add_library(LocalTrack SHARED
+        src/LocalTrack/LocalTracking.cc
+        src/LocalTrack/SlidingWindowManager.cc
+
+        include/LocalTrack/LocalTracking.h
+        include/LocalTrack/SlidingWindowManager.h
+        )
+
+
+target_link_libraries(${PROJECT_NAME}
+${OpenCV_LIBS}
+${EIGEN3_LIBS}
+${Pangolin_LIBRARIES}
+${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
+${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+cholmod
+${CHOLMOD_LIBRARIES}
+${BLAS_LIBRARIES}
+${LAPACK_LIBRARIES}
+LocalTrack
+)
+
+        ## Build examples
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/VIO)
 add_executable(euroc_VIO

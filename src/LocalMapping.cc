@@ -350,7 +350,7 @@ bool LocalMapping::TryInitVIO(void)
     {
         cv::Mat gwbefore = Rwi*GI;
         cv::Mat gwafter = Rwi_*GI;
-        cout<<"Time: "<<mpCurrentKeyFrame->mTimeStamp - mnStartTime<<", sstar: "<<sstar<<", s: "<<s_<<endl;
+        //cout<<"Time: "<<mpCurrentKeyFrame->mTimeStamp - mnStartTime<<", sstar: "<<sstar<<", s: "<<s_<<endl;
 
         fgw<<mpCurrentKeyFrame->mTimeStamp<<" "
            <<gwafter.at<float>(0)<<" "<<gwafter.at<float>(1)<<" "<<gwafter.at<float>(2)<<" "

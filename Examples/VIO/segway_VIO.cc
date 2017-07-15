@@ -9,8 +9,8 @@
 
 #include<opencv2/core/core.hpp>
 
-#include "../../src/IMU/imudata.h"
-#include "../../src/IMU/configparam.h"
+#include <IMU/imudata.h>
+#include <IMU/configparam.h>
 
 #include<System.h>
 #include "../DataSetUtils/segwayDatasetReader.hpp"

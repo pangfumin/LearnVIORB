@@ -27,8 +27,8 @@
 
 #include<opencv2/core/core.hpp>
 
-#include "../../src/IMU/imudata.h"
-#include "../../src/IMU/configparam.h"
+#include <IMU/imudata.h>
+#include <IMU/configparam.h>
 
 #include<System.h>
 
@@ -41,9 +41,10 @@ void LoadIMUData(const string &strIMUDataFilePath,
 
 int main(int argc, char **argv)
 {
-    if(argc != 6)
+    if(argc != 7)
     {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_image_folder path_to_times_file" << endl;
+        cerr << endl << "Usage:"<<
+                " ./mono_tum path_to_vocabulary path_to_settings path_to_image_folder path_to_times_file StartCount" << endl;
         return 1;
     }
     
@@ -53,10 +54,15 @@ int main(int argc, char **argv)
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
     LoadImages(string(argv[3]), string(argv[4]), vstrImageFilenames, vTimestamps);
-    
+
+    int startCnt = std::stoi(argv[6]);
     
     int nImages = vstrImageFilenames.size();
-    
+
+    if(startCnt > nImages){
+        std::cerr<<"Start image if beyond the image range! "<<std::endl;
+        return 1;
+    }
     
     std::vector<ORB_SLAM2::IMUData> vimuData;
     LoadIMUData(string(argv[5]),vimuData);
@@ -88,7 +94,7 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat im;
-    for(int ni=0; ni<nImages; ni++)
+    for(int ni=startCnt; ni<nImages; ni++)
     {
         // Read image from file
         im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
