@@ -1,6 +1,8 @@
 *.user
 *~
 **/build/*
+**/cmake-build-debug/*
+tem_result/*
 **/lib/*
 Vocabulary/*.txt
 *.kdev4
