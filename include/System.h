@@ -26,6 +26,13 @@
 #include<thread>
 #include<opencv2/core/core.hpp>
 
+
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include "Tracking.h"
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
@@ -96,6 +103,12 @@ public:
     // It waits until all threads have finished.
     // This function must be called before saving the trajectory.
     void Shutdown();
+
+
+    // Save / Load the current map for Mono Execution
+    void SaveMap(const string &filename);
+    void LoadMap(const string &filename);
+
 
     // Save camera trajectory in the TUM RGB-D dataset format.
     // Only for stereo and RGB-D. This method does not work for monocular.

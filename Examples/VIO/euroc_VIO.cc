@@ -155,6 +155,8 @@ int main(int argc, char **argv)
     cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
     cout << "mean tracking time: " << totaltime/nImages << endl;
 
+
+    SLAM.SaveMap("euroc_map.bin");
     // Save camera trajectory
      SLAM.SaveKeyFrameTrajectoryNavState(config._tmpFilePath+"KeyFrameNavStateTrajectory.txt");
 

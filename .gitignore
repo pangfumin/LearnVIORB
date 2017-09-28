@@ -10,6 +10,9 @@ Vocabulary/*.txt
 **/tmp/*
 **/debug.txt
 **/cmake-build-debug/*
+**/.idea/*
+**/tem_result/*
+
 
 Examples/ROS/ORB_SLAM2/Mono
 Examples/ROS/ORB_SLAM2/RGBD

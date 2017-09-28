@@ -35,6 +35,13 @@ find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(Cholmod REQUIRED)
 
+
+find_package(Boost  1.54.0  	     # Minimum or EXACT version e.g. 1.36.0
+  REQUIRED             					# Fail with error if Boost is not found
+  COMPONENTS serialization 				# Boost libraries by their canonical name
+  )
+
+
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/include
@@ -47,45 +54,45 @@ ${CHOLMOD_INCLUDE_DIR}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
-src/System.cc
-src/Tracking.cc
-src/LocalMapping.cc
-src/LoopClosing.cc
-src/ORBextractor.cc
-src/ORBmatcher.cc
-src/FrameDrawer.cc
-src/Converter.cc
-src/MapPoint.cc
-src/KeyFrame.cc
-src/Map.cc
-src/MapDrawer.cc
-src/Optimizer.cc
-src/PnPsolver.cc
-src/Frame.cc
-src/KeyFrameDatabase.cc
-src/Sim3Solver.cc
-src/Initializer.cc
-src/Viewer.cc
+    src/System.cc
+    src/Tracking.cc
+    src/LocalMapping.cc
+    src/LoopClosing.cc
+    src/ORBextractor.cc
+    src/ORBmatcher.cc
+    src/FrameDrawer.cc
+    src/Converter.cc
+    src/MapPoint.cc
+    src/KeyFrame.cc
+    src/Map.cc
+    src/MapDrawer.cc
+    src/Optimizer.cc
+    src/PnPsolver.cc
+    src/Frame.cc
+    src/KeyFrameDatabase.cc
+    src/Sim3Solver.cc
+    src/Initializer.cc
+    src/Viewer.cc
 
-include/Frame.h
-include/KeyFrame.h
-include/Tracking.h
-include/LocalMapping.h
+    include/Frame.h
+    include/KeyFrame.h
+    include/Tracking.h
+    include/LocalMapping.h
 
-src/IMU/configparam.h
-src/IMU/configparam.cpp
+    src/IMU/configparam.h
+    src/IMU/configparam.cpp
 
-src/IMU/imudata.h
-src/IMU/imudata.cpp
-src/IMU/IMUPreintegrator.h
-src/IMU/IMUPreintegrator.cpp
-src/IMU/so3.cpp
-src/IMU/so3.h
-src/IMU/NavState.h
-src/IMU/NavState.cpp
+    src/IMU/imudata.h
+    src/IMU/imudata.cpp
+    src/IMU/IMUPreintegrator.h
+    src/IMU/IMUPreintegrator.cpp
+    src/IMU/so3.cpp
+    src/IMU/so3.h
+    src/IMU/NavState.h
+    src/IMU/NavState.cpp
 
-src/IMU/g2otypes.h
-src/IMU/g2otypes.cpp
+    src/IMU/g2otypes.h
+    src/IMU/g2otypes.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -98,6 +105,7 @@ cholmod
 ${CHOLMOD_LIBRARIES}
 ${BLAS_LIBRARIES}
 ${LAPACK_LIBRARIES}
+${Boost_LIBRARIES}
 )
 
 ## Build examples
@@ -149,3 +157,13 @@ target_link_libraries(segway_VIO ${PROJECT_NAME})
 #add_executable(bin_vocabulary
 #tools/bin_vocabulary.cc)
 #target_link_libraries(bin_vocabulary ${PROJECT_NAME})
+
+
+## Test
+
+# Prepare "Catch" library for other executables
+set(CATCH_INCLUDE_DIR include/utility/catch)
+add_library(Catch INTERFACE)
+target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
+
+add_subdirectory(test)

@@ -25,6 +25,17 @@
 #include"Frame.h"
 #include"Map.h"
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/split_free.hpp>
+
+#include "utility/cvmat_serialization.hpp"
+
 #include<opencv2/core/core.hpp>
 #include<mutex>
 
@@ -39,6 +50,7 @@ class Frame;
 class MapPoint
 {
 public:
+    MapPoint();
     MapPoint(const cv::Mat &Pos, KeyFrame* pRefKF, Map* pMap);
     MapPoint(const cv::Mat &Pos,  Map* pMap, Frame* pFrame, const int &idxF);
 
@@ -81,6 +93,9 @@ public:
     int PredictScale(const float &currentDist, KeyFrame*pKF);
     int PredictScale(const float &currentDist, Frame* pF);
 
+    void SetMap(Map* map);
+    void SetObservations(std::vector<KeyFrame*>);
+
 public:
     long unsigned int mnId;
     static long unsigned int nNextId;
@@ -119,6 +134,7 @@ protected:
 
      // Keyframes observing the point and associated index in keyframe
      std::map<KeyFrame*,size_t> mObservations;
+     std::map<long unsigned int, size_t>  mObservations_nId;
 
      // Mean viewing direction
      cv::Mat mNormalVector;
@@ -143,8 +159,27 @@ protected:
 
      Map* mpMap;
 
+
+
+    std::pair<long unsigned int, bool> mref_KfId_pair;
+
      std::mutex mMutexPos;
      std::mutex mMutexFeatures;
+
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+        boost::serialization::split_member(ar, *this, version);
+    }
+
+    template<class Archive>
+    void save(Archive & ar, const unsigned int version) const;
+
+
+    template<class Archive>
+    void load(Archive & ar, const unsigned int version);
 };
 
 } //namespace ORB_SLAM

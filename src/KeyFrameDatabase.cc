@@ -33,6 +33,8 @@ namespace ORB_SLAM2
 KeyFrameDatabase::KeyFrameDatabase (const ORBVocabulary &voc):
     mpVoc(&voc)
 {
+
+    // give every visual word a keyframe* list
     mvInvertedFile.resize(voc.size());
 }
 
@@ -41,7 +43,9 @@ void KeyFrameDatabase::add(KeyFrame *pKF)
 {
     unique_lock<mutex> lock(mMutex);
 
-    for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end(); vit!=vend; vit++)
+    // add this keyframe* into the invertedFile
+    for(DBoW2::BowVector::const_iterator vit= pKF->mBowVec.begin(), vend=pKF->mBowVec.end();
+        vit!=vend; vit++)
         mvInvertedFile[vit->first].push_back(pKF);
 }
 
