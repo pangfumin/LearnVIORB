@@ -158,7 +158,7 @@ int main(int argc, char **argv)
 
     SLAM.SaveMap("euroc_map.bin");
     // Save camera trajectory
-     SLAM.SaveKeyFrameTrajectoryNavState(config._tmpFilePath+"KeyFrameNavStateTrajectory.txt");
+    SLAM.SaveKeyFrameTrajectoryNavState(config._tmpFilePath+"KeyFrameNavStateTrajectory.txt");
 
     return 0;
 }
