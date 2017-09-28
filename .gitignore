@@ -9,6 +9,7 @@ Vocabulary/*.txt
 *.autosave
 **/tmp/*
 **/debug.txt
+**/cmake-build-debug/*
 
 Examples/ROS/ORB_SLAM2/Mono
 Examples/ROS/ORB_SLAM2/RGBD
