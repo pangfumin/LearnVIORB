@@ -252,4 +252,37 @@ void Map::clear()
     mvpKeyFrameOrigins.clear();
 }
 
+void Map::RecoverMap(KeyFrameDatabase* ptrKeyFrameDb,ORBVocabulary* ptrORBVocabulary){
+
+
+    vector<ORB_SLAM2::KeyFrame*> vpKFs = this->GetAllKeyFrames();
+    for (vector<ORB_SLAM2::KeyFrame*>::iterator it = vpKFs.begin(); it != vpKFs.end(); ++it) {
+        (*it)->SetKeyFrameDatabase(ptrKeyFrameDb);
+        (*it)->SetORBvocabulary(ptrORBVocabulary);
+        (*it)->SetMap(this);
+        (*it)->ComputeBoW();
+        ptrKeyFrameDb->add(*it);
+        (*it)->SetMapPoints(this->GetAllMapPoints());
+        (*it)->SetSpanningTree(vpKFs);
+        (*it)->SetGridParams(vpKFs);
+
+        // Reconstruct map points Observation
+
+    }
+
+    vector<ORB_SLAM2::MapPoint*> vpMPs = this->GetAllMapPoints();
+    for (vector<ORB_SLAM2::MapPoint*>::iterator mit = vpMPs.begin(); mit != vpMPs.end(); ++mit) {
+        (*mit)->SetMap(this);
+        (*mit)->SetObservations(vpKFs);
+
+    }
+
+    for (vector<ORB_SLAM2::KeyFrame*>::iterator it = vpKFs.begin(); it != vpKFs.end(); ++it) {
+        (*it)->UpdateConnections();
+    }
+
+
+}
+
+
 } //namespace ORB_SLAM

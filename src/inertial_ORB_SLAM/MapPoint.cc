@@ -115,6 +115,7 @@ void MapPoint::AddObservation(KeyFrame* pKF, size_t idx)
         return;
     mObservations[pKF]=idx;
 
+    // if stereo measurement is available
     if(pKF->mvuRight[idx]>=0)
         nObs+=2;
     else
@@ -252,6 +253,7 @@ float MapPoint::GetFoundRatio()
     return static_cast<float>(mnFound)/mnVisible;
 }
 
+    // presenst the landmark with least median distance to the rest
 void MapPoint::ComputeDistinctiveDescriptors()
 {
     // Retrieve all observed descriptors

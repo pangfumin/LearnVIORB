@@ -30,7 +30,7 @@
 #include "../../src/IMU/imudata.h"
 #include "../../src/IMU/configparam.h"
 
-#include<System.h>
+#include "../../src/inertial_ORB_SLAM/System.h"
 
 using namespace std;
 

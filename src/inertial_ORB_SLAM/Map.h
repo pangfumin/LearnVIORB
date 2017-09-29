@@ -23,6 +23,7 @@
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "KeyFrameDatabase.h"
 #include <set>
 
 #include <boost/serialization/serialization.hpp>
@@ -41,6 +42,9 @@ namespace ORB_SLAM2
 
 class MapPoint;
 class KeyFrame;
+class KeyFrameDatabase;
+
+
 
 class KFIdComapre
 {
@@ -74,6 +78,8 @@ public:
     long unsigned int GetMaxKFid();
 
     void clear();
+
+    void RecoverMap(KeyFrameDatabase* ptrKeyFrameDb,ORBVocabulary* ptrORBVocabulary);
 
     vector<KeyFrame*> mvpKeyFrameOrigins;
 

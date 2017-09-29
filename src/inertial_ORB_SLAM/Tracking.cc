@@ -89,7 +89,7 @@ void Tracking::RecomputeIMUBiasAndCurrentNavstate(NavState& nscur)
     cv::Mat B = cv::Mat::zeros(3*(N-2),1,CV_32F);
     const cv::Mat& gw = mpLocalMapper->GetGravityVec();
     const cv::Mat& Tcb = ConfigParam::GetMatT_cb();
-    for(int i=0; i<N-2; i++)
+    for(size_t i=0; i<N-2; i++)
     {
         const Frame& F1 = mv20FramesReloc[i];
         const Frame& F2 = mv20FramesReloc[i+1];
@@ -766,7 +766,7 @@ void Tracking::Track()
     else
     {
         // System is initialized. Track Frame.
-        bool bOK;
+        bool bOK = false;
 
         // Initial camera pose estimation using motion model or relocalization (if tracking is lost)
         if(!mbOnlyTracking)

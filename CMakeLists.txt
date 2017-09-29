@@ -54,30 +54,26 @@ ${CHOLMOD_INCLUDE_DIR}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
-    src/System.cc
-    src/Tracking.cc
-    src/LocalMapping.cc
-    src/LoopClosing.cc
-    src/ORBextractor.cc
-    src/ORBmatcher.cc
-    src/FrameDrawer.cc
-    src/Converter.cc
-    src/MapPoint.cc
-    src/KeyFrame.cc
-    src/Map.cc
-    src/MapDrawer.cc
-    src/Optimizer.cc
-    src/PnPsolver.cc
-    src/Frame.cc
-    src/KeyFrameDatabase.cc
-    src/Sim3Solver.cc
-    src/Initializer.cc
-    src/Viewer.cc
+    src/inertial_ORB_SLAM/System.cc
+    src/inertial_ORB_SLAM/Tracking.cc
+    src/inertial_ORB_SLAM/LocalMapping.cc
+    src/inertial_ORB_SLAM/LoopClosing.cc
+    src/inertial_ORB_SLAM/ORBextractor.cc
+    src/inertial_ORB_SLAM/ORBmatcher.cc
+    src/inertial_ORB_SLAM/FrameDrawer.cc
+    src/inertial_ORB_SLAM/Converter.cc
+    src/inertial_ORB_SLAM/MapPoint.cc
+    src/inertial_ORB_SLAM/KeyFrame.cc
+    src/inertial_ORB_SLAM/Map.cc
+    src/inertial_ORB_SLAM/MapDrawer.cc
+    src/inertial_ORB_SLAM/Optimizer.cc
+    src/inertial_ORB_SLAM/PnPsolver.cc
+    src/inertial_ORB_SLAM/Frame.cc
+    src/inertial_ORB_SLAM/KeyFrameDatabase.cc
+    src/inertial_ORB_SLAM/Sim3Solver.cc
+    src/inertial_ORB_SLAM/Initializer.cc
+    src/inertial_ORB_SLAM/Viewer.cc
 
-    include/Frame.h
-    include/KeyFrame.h
-    include/Tracking.h
-    include/LocalMapping.h
 
     src/IMU/configparam.h
     src/IMU/configparam.cpp
