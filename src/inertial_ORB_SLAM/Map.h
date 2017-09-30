@@ -79,6 +79,9 @@ public:
 
     void clear();
 
+    void LoadMap(const string &filename);
+
+
     void RecoverMap(KeyFrameDatabase* ptrKeyFrameDb,ORBVocabulary* ptrORBVocabulary);
 
     vector<KeyFrame*> mvpKeyFrameOrigins;

@@ -252,6 +252,21 @@ void Map::clear()
     mvpKeyFrameOrigins.clear();
 }
 
+void Map::LoadMap(const string &filename)
+{
+    {
+        std::ifstream is(filename);
+        boost::archive::binary_iarchive ia(is, boost::archive::no_header);
+
+        ia >> *this;
+    }
+
+    cout << endl << filename <<" : Map Loaded!" << endl;
+
+
+}
+
+
 void Map::RecoverMap(KeyFrameDatabase* ptrKeyFrameDb,ORBVocabulary* ptrORBVocabulary){
 
 

@@ -104,6 +104,13 @@ ${LAPACK_LIBRARIES}
 ${Boost_LIBRARIES}
 )
 
+
+add_library(model_based_localization
+        src/localization/model_based_localization.cpp
+        )
+target_link_libraries(model_based_localization
+        ${PROJECT_NAME})
+
 ## Build examples
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/VIO)
@@ -160,6 +167,6 @@ target_link_libraries(segway_VIO ${PROJECT_NAME})
 # Prepare "Catch" library for other executables
 set(CATCH_INCLUDE_DIR include/utility/catch)
 add_library(Catch INTERFACE)
-target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
+target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR} )
 
 add_subdirectory(test)

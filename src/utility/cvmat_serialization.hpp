@@ -66,8 +66,6 @@ namespace boost {
             ar & boost::serialization::make_array(m.ptr(), data_size);
         }
 
-
-
     }
 }
 

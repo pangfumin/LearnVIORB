@@ -12,6 +12,7 @@ Vocabulary/*.txt
 **/cmake-build-debug/*
 **/.idea/*
 **/tem_result/*
+**/*.bin
 
 
 Examples/ROS/ORB_SLAM2/Mono

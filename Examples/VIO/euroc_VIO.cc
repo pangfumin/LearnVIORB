@@ -46,22 +46,17 @@ int main(int argc, char **argv)
         cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings path_to_image_folder path_to_times_file" << endl;
         return 1;
     }
-    
-    
-     
+
     // Retrieve paths to images
     vector<string> vstrImageFilenames;
     vector<double> vTimestamps;
     LoadImages(string(argv[3]), string(argv[4]), vstrImageFilenames, vTimestamps);
-    
-    
+
     int nImages = vstrImageFilenames.size();
-    
-    
+
     std::vector<ORB_SLAM2::IMUData> vimuData;
     LoadIMUData(string(argv[5]),vimuData);
-    
-    
+
     std::cout<<"Get Image: "<<nImages<<" "<<"Get IMU： "<< vimuData.size()<<std::endl;
 
     if(nImages<=0)
@@ -202,7 +197,7 @@ void LoadIMUData(const string &strIMUDataFilePath, std::vector<ORB_SLAM2::IMUDat
     }
     
     std::string line;
-    int cnt = 0;
+
      while (std::getline(fIMUdata, line))
      {
         std::stringstream  ss;
