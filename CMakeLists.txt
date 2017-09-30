@@ -64,7 +64,7 @@ add_library(${PROJECT_NAME} SHARED
     src/inertial_ORB_SLAM/Converter.cc
     src/inertial_ORB_SLAM/MapPoint.cc
     src/inertial_ORB_SLAM/KeyFrame.cc
-    src/inertial_ORB_SLAM/Map.cc
+    src/inertial_ORB_SLAM/SLAMMap.cc
     src/inertial_ORB_SLAM/MapDrawer.cc
     src/inertial_ORB_SLAM/Optimizer.cc
     src/inertial_ORB_SLAM/PnPsolver.cc
@@ -106,6 +106,8 @@ ${Boost_LIBRARIES}
 
 
 add_library(model_based_localization
+        src/localization/dls_pnp.cpp
+        src/localization/dls_impl.cpp
         src/localization/model_based_localization.cpp
         )
 target_link_libraries(model_based_localization

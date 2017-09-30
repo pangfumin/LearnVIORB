@@ -23,7 +23,7 @@
 
 #include "KeyFrame.h"
 #include "LocalMapping.h"
-#include "Map.h"
+#include "SLAMMap.h"
 #include "ORBVocabulary.h"
 #include "Tracking.h"
 
@@ -63,7 +63,7 @@ public:
 
 public:
 
-    LoopClosing(Map* pMap, KeyFrameDatabase* pDB, ORBVocabulary* pVoc,const bool bFixScale, ConfigParam* pParams);
+    LoopClosing(SLAMMap* pMap, KeyFrameDatabase* pDB, ORBVocabulary* pVoc,const bool bFixScale, ConfigParam* pParams);
 
     void SetTracker(Tracking* pTracker);
 
@@ -114,7 +114,7 @@ protected:
     bool mbFinished;
     std::mutex mMutexFinish;
 
-    Map* mpMap;
+    SLAMMap* mpMap;
     Tracking* mpTracker;
 
     KeyFrameDatabase* mpKeyFrameDB;

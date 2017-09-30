@@ -23,7 +23,7 @@
 
 #include"KeyFrame.h"
 #include"Frame.h"
-#include"Map.h"
+#include"SLAMMap.h"
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -51,8 +51,8 @@ class MapPoint
 {
 public:
     MapPoint();
-    MapPoint(const cv::Mat &Pos, KeyFrame* pRefKF, Map* pMap);
-    MapPoint(const cv::Mat &Pos,  Map* pMap, Frame* pFrame, const int &idxF);
+    MapPoint(const cv::Mat &Pos, KeyFrame* pRefKF, SLAMMap* pMap);
+    MapPoint(const cv::Mat &Pos,  SLAMMap* pMap, Frame* pFrame, const int &idxF);
 
     void SetWorldPos(const cv::Mat &Pos);
     cv::Mat GetWorldPos();
@@ -93,7 +93,7 @@ public:
     int PredictScale(const float &currentDist, KeyFrame*pKF);
     int PredictScale(const float &currentDist, Frame* pF);
 
-    void SetMap(Map* map);
+    void SetMap(SLAMMap* map);
     void SetObservations(std::vector<KeyFrame*>);
 
 public:
@@ -157,11 +157,11 @@ protected:
      float mfMinDistance;
      float mfMaxDistance;
 
-     Map* mpMap;
+     SLAMMap* mpMap;
 
 
 
-    std::pair<long unsigned int, bool> mref_KfId_pair;
+     std::pair<long unsigned int, bool> mref_KfId_pair;
 
      std::mutex mMutexPos;
      std::mutex mMutexFeatures;

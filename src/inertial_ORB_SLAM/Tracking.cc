@@ -27,7 +27,7 @@
 #include"ORBmatcher.h"
 #include"FrameDrawer.h"
 #include"Converter.h"
-#include"Map.h"
+#include"SLAMMap.h"
 #include"Initializer.h"
 
 #include"Optimizer.h"
@@ -496,7 +496,7 @@ cv::Mat Tracking::GrabImageMonoVI(const cv::Mat &im, const std::vector<IMUData> 
 //-------------------------------------------------------------------------------------------
 
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer,
-                   Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor,ConfigParam* pParams):
+                   SLAMMap *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor,ConfigParam* pParams):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)

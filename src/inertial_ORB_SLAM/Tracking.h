@@ -27,7 +27,7 @@
 
 #include"Viewer.h"
 #include"FrameDrawer.h"
-#include"Map.h"
+#include"SLAMMap.h"
 #include"LocalMapping.h"
 #include"LoopClosing.h"
 #include"Frame.h"
@@ -82,7 +82,7 @@ public:
 
 
 public:
-    Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
+    Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, SLAMMap* pMap,
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor, ConfigParam* pParams);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
@@ -207,7 +207,7 @@ protected:
     MapDrawer* mpMapDrawer;
 
     //Map
-    Map* mpMap;
+    SLAMMap* mpMap;
 
     //Calibration matrix
     cv::Mat mK;

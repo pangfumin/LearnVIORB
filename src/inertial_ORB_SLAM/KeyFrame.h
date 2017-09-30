@@ -51,7 +51,7 @@ struct id_map
     bool is_valid;
     long unsigned int id;
 };
-class Map;
+class SLAMMap;
 class MapPoint;
 class Frame;
 class KeyFrameDatabase;
@@ -63,7 +63,7 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     KeyFrame();
-    KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB, std::vector<IMUData> vIMUData, KeyFrame* pLastKF=NULL);
+    KeyFrame(Frame &F, SLAMMap* pMap, KeyFrameDatabase* pKFDB, std::vector<IMUData> vIMUData, KeyFrame* pLastKF=NULL);
     KeyFrame* GetPrevKeyFrame(void);
     KeyFrame* GetNextKeyFrame(void);
     void SetPrevKeyFrame(KeyFrame* pKF);
@@ -113,7 +113,7 @@ protected:
 
 
 public:
-    KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
+    KeyFrame(Frame &F, SLAMMap* pMap, KeyFrameDatabase* pKFDB);
 
     // Pose functions
     void SetPose(const cv::Mat &Tcw);
@@ -187,7 +187,7 @@ public:
     }
 
 
-    void SetMap(Map* map);
+    void SetMap(SLAMMap* map);
     void SetKeyFrameDatabase(KeyFrameDatabase* pKeyFrameDB);
     void SetORBvocabulary(ORBVocabulary* pORBvocabulary);
     void SetMapPoints(std::vector<MapPoint*> spMapPoints);
@@ -310,7 +310,7 @@ protected:
 
     float mHalfBaseline; // Only for visualization
 
-    Map* mpMap;
+    SLAMMap* mpMap;
 
 
 

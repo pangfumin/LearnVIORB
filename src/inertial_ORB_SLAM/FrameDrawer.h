@@ -23,7 +23,7 @@
 
 #include "Tracking.h"
 #include "MapPoint.h"
-#include "Map.h"
+#include "SLAMMap.h"
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
@@ -40,7 +40,7 @@ class Viewer;
 class FrameDrawer
 {
 public:
-    FrameDrawer(Map* pMap);
+    FrameDrawer(SLAMMap* pMap);
 
     // Update info from the last processed frame.
     void Update(Tracking *pTracker);
@@ -65,7 +65,7 @@ protected:
     vector<int> mvIniMatches;
     int mState;
 
-    Map* mpMap;
+    SLAMMap* mpMap;
 
     std::mutex mMutex;
 };

@@ -506,7 +506,7 @@ void LocalMapping::DeleteBadInLocalWindow(void)
 //-------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------
 
-LocalMapping::LocalMapping(Map *pMap, const float bMonocular, ConfigParam* pParams):
+LocalMapping::LocalMapping(SLAMMap *pMap, const float bMonocular, ConfigParam* pParams):
     mbMonocular(bMonocular), mbResetRequested(false), mbFinishRequested(false), mbFinished(true), mpMap(pMap),
     mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true)
 {

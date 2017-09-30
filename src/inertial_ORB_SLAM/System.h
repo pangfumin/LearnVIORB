@@ -36,7 +36,7 @@
 #include "Tracking.h"
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
-#include "Map.h"
+#include "SLAMMap.h"
 #include "LocalMapping.h"
 #include "LoopClosing.h"
 #include "KeyFrameDatabase.h"
@@ -50,7 +50,7 @@ namespace ORB_SLAM2
 
 class Viewer;
 class FrameDrawer;
-class Map;
+class SLAMMap;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
@@ -144,7 +144,7 @@ private:
     KeyFrameDatabase* mpKeyFrameDatabase;
 
     // Map structure that stores the pointers to all KeyFrames and MapPoints.
-    Map* mpMap;
+    SLAMMap* mpMap;
 
     // Tracker. It receives a frame and computes the associated camera pose.
     // It also decides when to insert a new keyframe, create some new MapPoints and
