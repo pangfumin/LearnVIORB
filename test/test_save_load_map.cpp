@@ -14,6 +14,18 @@ int main(){
         exit(-1);
     }
 
+    std::cout<<"VW size: "<< orbVocabulary->size()<<std::endl;
+    std::cout<<"VW branch: "<<orbVocabulary->getBranchingFactor()<<std::endl;
+    std::cout<<"VW depth: "<<orbVocabulary->getDepthLevels()<<std::endl;
+    std::cout<<"VW ave-depth: "<<orbVocabulary->getEffectiveLevels()<<std::endl;
+    std::cout<<"VW scoretype: "<<orbVocabulary->getScoringType()<<std::endl;
+    std::cout<<"VW weighttype: "<<orbVocabulary->getWeightingType()<<std::endl;
+
+
+
+
+
+
 
     ORB_SLAM2::KeyFrameDatabase* keyFrameDatabase = new ORB_SLAM2::KeyFrameDatabase(*orbVocabulary);
 

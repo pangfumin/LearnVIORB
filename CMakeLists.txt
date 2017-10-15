@@ -105,6 +105,221 @@ ${Boost_LIBRARIES}
 )
 
 
+
+find_package (LAPACK)
+find_package (GMM)
+find_package (OpenMesh)
+
+#find_package (FLANN)
+set(FLANN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/Thirdparty/flann-1.6.11-src/src/cpp)
+set(FLANN_LIBRARY ${PROJECT_SOURCE_DIR}/Thirdparty/flann-1.6.11-src/build/lib/libflann_cpp_s.a)
+
+
+
+#ANN
+set(ANN_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/Thirdparty/ann_1.1.2/include)
+set(ANN_LIBRARY ${PROJECT_SOURCE_DIR}/Thirdparty/ann_1.1.2/lib/libANN.a)
+
+
+# source and header of the exif reader
+set (exif_SRC
+        src/localization/image_based_localization/exif_reader/exif_reader.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/exif.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/gpsinfo.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/iptc.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/jhead.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/jpgfile.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/makernote.cc
+        src/localization/image_based_localization/exif_reader/jhead-2.90/paths.cc )
+set (exif_HDR
+        src/localization/image_based_localization/exif_reader/exif_reader.hh
+        src/localization/image_based_localization/exif_reader/jhead-2.90/jhead.hh)
+
+# source and header of the feature library
+set (features_SRC
+        src/localization/image_based_localization/features/SIFT_loader.cc
+        src/localization/image_based_localization/features/visual_words_handler.cc)
+set (features_HDR
+        src/localization/image_based_localization/features/SIFT_keypoint.hh
+        src/localization/image_based_localization/features/SIFT_loader.hh
+        src/localization/image_based_localization/features/visual_words_handler.hh)
+
+# source and header of the math library
+set (math_SRC
+        src/localization/image_based_localization/math/math.cc
+        src/localization/image_based_localization/math/matrix3x3.cc
+        src/localization/image_based_localization/math/matrix4x4.cc
+        src/localization/image_based_localization/math/matrixbase.cc
+        src/localization/image_based_localization/math/projmatrix.cc
+        src/localization/image_based_localization/math/pseudorandomnrgen.cc
+        src/localization/image_based_localization/math/SFMT_src/SFMT.cc )
+set (math_HDR
+        src/localization/image_based_localization/math/math.hh
+        src/localization/image_based_localization/math/matrix3x3.hh
+        src/localization/image_based_localization/math/matrix4x4.hh
+        src/localization/image_based_localization/math/matrixbase.hh
+        src/localization/image_based_localization/math/projmatrix.hh
+        src/localization/image_based_localization/math/pseudorandomnrgen.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params607.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params1279.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params2281.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params4253.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params11213.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params19937.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params44497.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params86243.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params132049.hh
+        src/localization/image_based_localization/math/SFMT_src/SFMT-params216091.hh )
+
+# source and header for the sfm functionality
+set (sfm_SRC
+        src/localization/image_based_localization/sfm/parse_bundler.cc
+        src/localization/image_based_localization/sfm/bundler_camera.cc)
+set (sfm_HDR
+        src/localization/image_based_localization/sfm/parse_bundler.hh
+        src/localization/image_based_localization/sfm/bundler_camera.hh)
+
+# source and header for the 6-point pose solver
+set (solver_SRC
+        src/localization/image_based_localization/solver/solverbase.cc
+        src/localization/image_based_localization/solver/solverproj.cc)
+set (solver_HDR
+        src/localization/image_based_localization/solver/solverbase.hh
+        src/localization/image_based_localization/solver/solverproj.hh)
+
+include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${LAPACK_INCLUDE_DIR}
+        ${GMM_INCLUDE_DIR}
+        ${OPENMESH_INCLUDE_DIR}
+        ${FLANN_INCLUDE_DIR}
+        ${ANN_INCLUDE_DIR}
+)
+
+link_directories (
+        ${LAPACK_LIBRARY_DIR}
+        ${OPENMESH_LIBRARY_DIR}
+        ${ANN_LIBRARY_DIR}
+        ${FLANN_LIBRARY_DIR}
+)
+
+
+
+# set sources for the executables
+add_executable (Bundle2Info
+        src/localization/image_based_localization/features/SIFT_loader.cc
+        src/localization/image_based_localization/features/SIFT_keypoint.hh
+        src/localization/image_based_localization/features/SIFT_loader.hh
+        ${sfm_SRC}
+        ${sfm_HDR}
+        src/localization/image_based_localization/math/matrix3x3.cc
+        src/localization/image_based_localization/math/matrix4x4.cc
+        src/localization/image_based_localization/math/matrixbase.cc
+        src/localization/image_based_localization/math/projmatrix.cc
+        src/localization/image_based_localization/math/matrix3x3.hh
+        src/localization/image_based_localization/math/matrix4x4.hh
+        src/localization/image_based_localization/math/matrixbase.hh
+        src/localization/image_based_localization/math/projmatrix.hh
+        src/localization/image_based_localization/Bundle2Info.cc )
+add_executable (compute_desc_assignments
+        src/localization/image_based_localization/compute_desc_assignments.cc
+        ${sfm_SRC} ${sfm_HDR}
+        ${features_SRC}
+        src/localization/image_based_localization/math/matrix3x3.cc
+        src/localization/image_based_localization/math/matrix4x4.cc
+        src/localization/image_based_localization/math/matrixbase.cc
+        src/localization/image_based_localization/math/projmatrix.cc
+        src/localization/image_based_localization/math/matrix3x3.hh
+        src/localization/image_based_localization/math/matrix4x4.hh
+        src/localization/image_based_localization/math/matrixbase.hh
+        src/localization/image_based_localization/math/projmatrix.hh
+        ${features_HDR} )
+add_executable (acg_localizer
+        ${exif_SRC} ${exif_HDR}
+        ${features_SRC}
+        ${features_HDR}
+        src/localization/image_based_localization/timer.cc
+        src/localization/image_based_localization/timer.hh
+        ${math_SRC}
+        ${math_HDR}
+        ${solver_SRC}
+        ${solver_HDR}
+        src/localization/image_based_localization/RANSAC.hh
+        src/localization/image_based_localization/RANSAC.cc
+        src/localization/image_based_localization/acg_localizer.cc )
+add_executable (acg_localizer_knn
+        ${exif_SRC}
+        ${exif_HDR}
+        ${features_SRC}
+        ${features_HDR}
+        src/localization/image_based_localization/timer.cc
+        src/localization/image_based_localization/timer.hh
+        ${math_SRC}
+        ${math_HDR}
+        ${solver_SRC}
+        ${solver_HDR}
+        src/localization/image_based_localization/RANSAC.hh
+        src/localization/image_based_localization/RANSAC.cc
+        src/localization/image_based_localization/acg_localizer_knn.cc )
+add_executable (acg_localizer_active_search
+        ${exif_SRC}
+        ${exif_HDR}
+        ${features_SRC}
+        ${features_HDR}
+        src/localization/image_based_localization/timer.cc
+        src/localization/image_based_localization/timer.hh
+        ${math_SRC}
+        ${math_HDR}
+        ${solver_SRC}
+        ${solver_HDR}
+        ${sfm_SRC}
+        ${sfm_HDR}
+        src/localization/image_based_localization/RANSAC.hh
+        src/localization/image_based_localization/RANSAC.cc
+        src/localization/image_based_localization/acg_localizer_active_search.cc )
+
+# set libraries to link against
+target_link_libraries (Bundle2Info
+        )
+
+target_link_libraries (compute_desc_assignments
+        ${OPENMESH_LIBRARY}
+        ${LAPACK_LIBRARY}
+        ${LAPACK_LIBRARIES}
+        ${GMM_LIBRARY}
+        ${FLANN_LIBRARY}
+        )
+
+target_link_libraries (acg_localizer
+        ${OPENMESH_LIBRARY}
+        ${LAPACK_LIBRARY}
+        ${LAPACK_LIBRARIES}
+        ${GMM_LIBRARY}
+        ${FLANN_LIBRARY}
+        )
+
+
+target_link_libraries (acg_localizer_knn
+        ${OPENMESH_LIBRARY}
+        ${LAPACK_LIBRARY}
+        ${LAPACK_LIBRARIES}
+        ${GMM_LIBRARY}
+        ${FLANN_LIBRARY}
+        ${ANN_LIBRARY}
+        )
+
+target_link_libraries (acg_localizer_active_search
+        ${OPENMESH_LIBRARY}
+        ${LAPACK_LIBRARY}
+        ${LAPACK_LIBRARIES}
+        ${GMM_LIBRARY}
+        ${FLANN_LIBRARY}
+        ${ANN_LIBRARY}
+        )
+
+
 add_library(model_based_localization
         src/localization/dls_pnp.cpp
         src/localization/dls_impl.cpp
