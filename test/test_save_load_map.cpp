@@ -36,6 +36,9 @@ int main(){
     std::string map_path = "/home/pang/software/LearnVIORB/euroc_map.bin";
 
     locater.LoadMap(map_path);
+    locater.RecoverMap();
+
+
 
 
 

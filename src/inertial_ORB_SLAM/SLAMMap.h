@@ -79,6 +79,14 @@ public:
 
     void clear();
 
+    // getter and setter for reload map
+    void SetKeyframe_id_index(const std::map<long unsigned int,long unsigned int>& map);
+    void SetMappoint_id_index(const std::map<long unsigned int,long unsigned int>& map);
+
+    std::map<long unsigned int,long unsigned int> GetKeyframe_id_index();
+    std::map<long unsigned int,long unsigned int> GetMappoint_id_index();
+
+
     vector<KeyFrame*> mvpKeyFrameOrigins;
 
     std::mutex mMutexMapUpdate;
@@ -91,6 +99,9 @@ protected:
     std::set<KeyFrame*,KFIdComapre> mspKeyFrames;
 
     std::vector<MapPoint*> mvpReferenceMapPoints;
+
+    std::map<long unsigned int,long unsigned int> mmKeyframe_id_index;
+    std::map<long unsigned int,long unsigned int> mmMappoint_id_index;
 
     long unsigned int mnMaxKFid;
 

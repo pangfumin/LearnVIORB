@@ -52,6 +52,31 @@ void Model_based_localization::RecoverMap(){
     for (vector<ORB_SLAM2::KeyFrame*>::iterator it = vpKFs.begin(); it != vpKFs.end(); ++it) {
         (*it)->UpdateConnections();
     }
+    // do some statistics:
+    std::cout<<"MapPoints in Map: "<< mpMap->MapPointsInMap()<<std::endl;
+    std::cout<<"Keyframes in Map: "<< mpMap->KeyFramesInMap()<<std::endl;
+
+    std::map<long unsigned int,long unsigned int> mKeyframe_id_index;
+    std::map<long unsigned int,long unsigned int> mMappoint_id_index;
+
+    uint cnt = 0;
+    for(auto i: mpMap->GetAllKeyFrames()){
+        //std::cout<<"keyframe id at "<< cnt++ <<" : "<<i->mnId<<std::endl;
+        mKeyframe_id_index[i->mnId] = cnt;
+    }
+
+    cnt = 0;
+    for(auto i: mpMap->GetAllMapPoints()){
+        //std::cout<<"mapPoint id at "<< cnt++ <<" : "<<i->mnId<<std::endl;
+        mMappoint_id_index[i->mnId] = cnt;
+
+    }
+
+    std::cout<<"mMappoint_id_index: "<<mMappoint_id_index.size()<<std::endl;
+    std::cout<<"mKeyframe_id_index: "<<mKeyframe_id_index.size()<<std::endl;
+
+    mpMap->SetKeyframe_id_index(mKeyframe_id_index);
+    mpMap->SetMappoint_id_index(mMappoint_id_index);
 
 }
 

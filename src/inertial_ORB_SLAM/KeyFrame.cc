@@ -1710,6 +1710,23 @@ float KeyFrame::ComputeSceneMedianDepth(const int q)
         }
     }
 
+    float KeyFrame::GetFocalLength(){
+        return fx;
+    }
+    cv::KeyPoint KeyFrame::GetKeyPointUn(uint id){
+        return mvKeysUn.at(id);
+
+    }
+
+    std::vector<cv::KeyPoint> KeyFrame::GetKeyPointsUn(){
+        return mvKeysUn;
+
+    }
+    cv::Mat KeyFrame::GetDescriptors(){
+        return mDescriptors;
+
+    }
+
     void KeyFrame::SetMap(SLAMMap* map)
     {
         mpMap = map;

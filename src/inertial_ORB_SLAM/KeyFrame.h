@@ -95,6 +95,8 @@ public:
     NavState mNavStateGBA;       //mTcwGBA
     NavState mNavStateBefGBA;    //mTcwBefGBA
 
+
+
 protected:
 
     std::mutex mMutexPrevKF;
@@ -196,6 +198,14 @@ public:
 
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
+
+
+    float GetFocalLength();
+
+    cv::KeyPoint GetKeyPointUn(uint id);
+    std::vector<cv::KeyPoint> GetKeyPointsUn();
+    cv::Mat GetDescriptors();
+
 public:
 
     static long unsigned int nNextId;

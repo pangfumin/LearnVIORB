@@ -252,4 +252,22 @@ void SLAMMap::clear()
     mvpKeyFrameOrigins.clear();
 }
 
+    void SLAMMap::SetKeyframe_id_index(const std::map<long unsigned int,long unsigned int>& map){
+        mmKeyframe_id_index = map;
+
+    }
+    void SLAMMap::SetMappoint_id_index(const std::map<long unsigned int,long unsigned int>& map){
+        mmMappoint_id_index = map;
+
+    }
+
+    std::map<long unsigned int,long unsigned int> SLAMMap::GetKeyframe_id_index(){
+        return mmKeyframe_id_index;
+
+    }
+    std::map<long unsigned int,long unsigned int> SLAMMap::GetMappoint_id_index(){
+        return mmMappoint_id_index;
+
+    }
+
 } //namespace ORB_SLAM

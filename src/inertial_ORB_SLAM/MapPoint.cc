@@ -156,6 +156,12 @@ map<KeyFrame*, size_t> MapPoint::GetObservations()
     return mObservations;
 }
 
+map<long unsigned int, size_t> MapPoint::GetObservation_ids()
+{
+    unique_lock<mutex> lock(mMutexFeatures);
+    return mObservations_nId;
+}
+
 int MapPoint::Observations()
 {
     unique_lock<mutex> lock(mMutexFeatures);
@@ -484,7 +490,7 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
         if (!found_reference)
         {
             mpRefKF = static_cast<KeyFrame*>(NULL);
-            cout << "refernce KF - " << kfRef_id << "is not found for mappoint " << mnId << endl;
+            cout << "refernce KF - " << kfRef_id << " is not found for mappoint " << mnId << endl;
             // Dummy KF
             //mpRefKF = new KeyFrame();
         }

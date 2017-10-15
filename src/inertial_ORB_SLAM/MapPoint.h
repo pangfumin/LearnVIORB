@@ -61,6 +61,7 @@ public:
     KeyFrame* GetReferenceKeyFrame();
 
     std::map<KeyFrame*,size_t> GetObservations();
+    std::map<long unsigned int, size_t> GetObservation_ids();
     int Observations();
 
     void AddObservation(KeyFrame* pKF,size_t idx);

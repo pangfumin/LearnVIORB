@@ -223,6 +223,25 @@ add_executable (Bundle2Info
         src/localization/image_based_localization/math/matrixbase.hh
         src/localization/image_based_localization/math/projmatrix.hh
         src/localization/image_based_localization/Bundle2Info.cc )
+
+
+# set sources for the executables
+add_executable (ORBmap2Info
+        src/localization/image_based_localization/features/SIFT_loader.cc
+        src/localization/image_based_localization/features/SIFT_keypoint.hh
+        src/localization/image_based_localization/features/SIFT_loader.hh
+        ${sfm_SRC}
+        ${sfm_HDR}
+        src/localization/image_based_localization/math/matrix3x3.cc
+        src/localization/image_based_localization/math/matrix4x4.cc
+        src/localization/image_based_localization/math/matrixbase.cc
+        src/localization/image_based_localization/math/projmatrix.cc
+        src/localization/image_based_localization/math/matrix3x3.hh
+        src/localization/image_based_localization/math/matrix4x4.hh
+        src/localization/image_based_localization/math/matrixbase.hh
+        src/localization/image_based_localization/math/projmatrix.hh
+        src/localization/image_based_localization/ORBmap2Info.cc )
+
 add_executable (compute_desc_assignments
         src/localization/image_based_localization/compute_desc_assignments.cc
         ${sfm_SRC} ${sfm_HDR}
@@ -284,7 +303,13 @@ add_executable (acg_localizer_active_search
 target_link_libraries (Bundle2Info
         )
 
+target_link_libraries (ORBmap2Info
+        ${PROJECT_NAME}
+        )
+
+
 target_link_libraries (compute_desc_assignments
+        ${PROJECT_NAME}
         ${OPENMESH_LIBRARY}
         ${LAPACK_LIBRARY}
         ${LAPACK_LIBRARIES}
@@ -293,6 +318,7 @@ target_link_libraries (compute_desc_assignments
         )
 
 target_link_libraries (acg_localizer
+        ${PROJECT_NAME}
         ${OPENMESH_LIBRARY}
         ${LAPACK_LIBRARY}
         ${LAPACK_LIBRARIES}
@@ -302,6 +328,7 @@ target_link_libraries (acg_localizer
 
 
 target_link_libraries (acg_localizer_knn
+        ${PROJECT_NAME}
         ${OPENMESH_LIBRARY}
         ${LAPACK_LIBRARY}
         ${LAPACK_LIBRARIES}
@@ -311,6 +338,7 @@ target_link_libraries (acg_localizer_knn
         )
 
 target_link_libraries (acg_localizer_active_search
+        ${PROJECT_NAME}
         ${OPENMESH_LIBRARY}
         ${LAPACK_LIBRARY}
         ${LAPACK_LIBRARIES}
