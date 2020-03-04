@@ -28,7 +28,7 @@ endif()
 
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(OpenCV 2.4.3 REQUIRED)
+find_package(OpenCV 3.3.0 REQUIRED)
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 find_package(Cholmod REQUIRED)
@@ -136,3 +136,7 @@ ${LAPACK_LIBRARIES}
 #add_executable(bin_vocabulary
 #tools/bin_vocabulary.cc)
 #target_link_libraries(bin_vocabulary ${PROJECT_NAME})
+
+add_executable(euroc_VIO
+        Examples/VIO/euroc_VIO.cc)
+target_link_libraries(euroc_VIO ${PROJECT_NAME})
