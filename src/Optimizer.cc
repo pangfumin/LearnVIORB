@@ -167,7 +167,8 @@ void Optimizer::GlobalBundleAdjustmentNavState(Map* pMap, const cv::Mat& gw, int
 
     }
 
-    const float thHuber2D = sqrt(5.99);
+    const float thHuber2D = sqrt(5.991);
+    const float thHuber3D = sqrt(7.815);
 
     // Set MapPoint vertices
     for(size_t i=0; i<vpMP.size(); i++)
@@ -223,7 +224,29 @@ void Optimizer::GlobalBundleAdjustmentNavState(Map* pMap, const cv::Mat& gw, int
             }
             else
             {
-                cerr<<"Stereo not supported"<<endl;
+                //cerr << "Stereo not supported" << endl;
+                //SET EDGE
+                    Eigen::Matrix<double, 3, 1> obs; // 这里和单目不同
+                   // const cv::KeyPoint &kpUn = pKF->mvKeysUn[i];
+                    const float &kp_ur = pKF->mvuRight[mit->second];
+                    obs << kpUn.pt.x, kpUn.pt.y, kp_ur;// 这里和单目不同
+
+                    g2o::EdgeStereoNavStatePVRPointXYZ* e = new g2o::EdgeStereoNavStatePVRPointXYZ();// 这里和单目不同
+
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(2 * pKF->mnId)));
+                    e->setMeasurement(obs);
+                    const float invSigma2 = pKF->mvInvLevelSigma2[kpUn.octave];
+                    Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                    e->setInformation(Info);
+
+                    g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuber3D);
+
+                    e->SetParams(pKF->fx, pKF->fy, pKF->cx, pKF->cy, pKF->mbf, Rbc, Pbc);
+
+                    optimizer.addEdge(e);
             }
         }
 
@@ -447,7 +470,20 @@ int Optimizer::PoseOptimization(Frame *pFrame, Frame* pLastFrame, const IMUPrein
     vnIndexEdgeMonoLast.reserve(Nlast);
 
 
+    //rocky  add  for stereo vio
+    vector<g2o::EdgeStereoNavStatePVRPointXYZOnlyPose*> vpEdgesStereo;
+    vector<size_t> vnIndexEdgeStereo;
+    vpEdgesStereo.reserve(Ncur);
+    vnIndexEdgeStereo.reserve(Ncur);
+
+    vector<g2o::EdgeStereoNavStatePVRPointXYZOnlyPose*> vpEdgesStereoLast;
+    vector<size_t> vnIndexEdgeStereoLast;
+    vpEdgesStereoLast.reserve(Nlast);
+    vnIndexEdgeStereoLast.reserve(Nlast);
+
+
     const float deltaMono = sqrt(5.991);
+    const float deltaStereo = sqrt(7.815);
 
     {
     unique_lock<mutex> lock(MapPoint::mGlobalMutex);
@@ -483,13 +519,42 @@ int Optimizer::PoseOptimization(Frame *pFrame, Frame* pLastFrame, const IMUPrein
 
                 optimizer.addEdge(e);
 
-                vpEdgesMono.push_back(e);
-                vnIndexEdgeMono.push_back(i);
+                    vpEdgesMono.push_back(e);
+                    vnIndexEdgeMono.push_back(i);
+                }
+                else  // Stereo observation
+                {
+                    //cerr<<"stereo shouldn't in poseoptimization"<<endl;
+                    nInitialCorrespondences++;
+                    pFrame->mvbOutlier[i] = false;
+
+                    //SET EDGE
+                    Eigen::Matrix<double, 3, 1> obs; // 这里和单目不同
+                    const cv::KeyPoint &kpUn = pFrame->mvKeysUn[i];
+                    const float &kp_ur = pFrame->mvuRight[i];
+                    obs << kpUn.pt.x, kpUn.pt.y, kp_ur;// 这里和单目不同
+
+                    g2o::EdgeStereoNavStatePVRPointXYZOnlyPose* e = new g2o::EdgeStereoNavStatePVRPointXYZOnlyPose();// 这里和单目不同
+
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(FramePVRId)));
+                    e->setMeasurement(obs);
+                    const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave];
+                    Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                    e->setInformation(Info);
+
+                    g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(deltaStereo);
+
+                    e->SetParams(pFrame->fx, pFrame->fy, pFrame->cx, pFrame->cy, pFrame->mbf, Rbc, Pbc, Converter::toVector3d(pMP->GetWorldPos()));
+
+                    optimizer.addEdge(e);
+
+                    vpEdgesStereo.push_back(e);
+                    vnIndexEdgeStereo.push_back(i);
+                }
             }
-            else  // Stereo observation
-            {
-                cerr<<"stereo shouldn't in poseoptimization"<<endl;
-            }
+
         }
 
     }
@@ -526,16 +591,42 @@ int Optimizer::PoseOptimization(Frame *pFrame, Frame* pLastFrame, const IMUPrein
 
                 optimizer.addEdge(e);
 
-                vpEdgesMonoLast.push_back(e);
-                vnIndexEdgeMonoLast.push_back(i);
-            }
-            else  // Stereo observation
-            {
-                cerr<<"stereo shouldn't in poseoptimization"<<endl;
+                    vpEdgesMonoLast.push_back(e);
+                    vnIndexEdgeMonoLast.push_back(i);
+                }
+                else  // Stereo observation
+                {
+                    //cerr<<"stereo shouldn't in poseoptimization"<<endl;
+                    pLastFrame->mvbOutlier[i] = false;
+
+                    //SET EDGE
+                    Eigen::Matrix<double, 3, 1> obs; // 这里和单目不同
+                    const cv::KeyPoint &kpUn = pLastFrame->mvKeysUn[i];
+                    const float &kp_ur = pLastFrame->mvuRight[i];
+                    obs << kpUn.pt.x, kpUn.pt.y, kp_ur;// 这里和单目不同
+
+                    g2o::EdgeStereoNavStatePVRPointXYZOnlyPose* e = new g2o::EdgeStereoNavStatePVRPointXYZOnlyPose();// 这里和单目不同
+
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(LastFramePVRId)));
+                    e->setMeasurement(obs);
+                    const float invSigma2 = pLastFrame->mvInvLevelSigma2[kpUn.octave];
+                    Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                    e->setInformation(Info);
+
+                    g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(deltaStereo);
+
+                    e->SetParams(pLastFrame->fx, pLastFrame->fy, pLastFrame->cx, pLastFrame->cy, pLastFrame->mbf, Rbc, Pbc, Converter::toVector3d(pMP->GetWorldPos()));
+
+                    optimizer.addEdge(e);
+
+                    vpEdgesStereo.push_back(e);
+                    vnIndexEdgeStereo.push_back(i);
+                }
             }
         }
-    }
-    }
+    
 
 
     if(nInitialCorrespondences<3)
@@ -544,7 +635,7 @@ int Optimizer::PoseOptimization(Frame *pFrame, Frame* pLastFrame, const IMUPrein
     // We perform 4 optimizations, after each optimization we classify observation as inlier/outlier
     // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
     const float chi2Mono[4]={5.991,5.991,5.991,5.991};
-    //const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
+    const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
     const int its[4]={10,10,10,10};
 
     //    //Debug log
@@ -571,14 +662,43 @@ int Optimizer::PoseOptimization(Frame *pFrame, Frame* pLastFrame, const IMUPrein
 
             const size_t idx = vnIndexEdgeMono[i];
 
-            if(pFrame->mvbOutlier[idx])
+            if (pFrame->mvbOutlier[idx])
+            {
+                e->computeError();// NOTE g2o会重新计算outlier edge的误差，如果该误差小于一定值可以变为inlier
+            }
+
+            const float chi2 = e->chi2();
+
+            if (chi2 > chi2Mono[it])
+            {
+                pFrame->mvbOutlier[idx] = true;
+                e->setLevel(1);
+                nBad++;
+            }
+            else
+            {
+                pFrame->mvbOutlier[idx] = false;
+                e->setLevel(0);
+            }
+
+            if (it == 2)
+                e->setRobustKernel(0);
+        }
+    // rocky for stereo vio
+        for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++)
+        {
+            g2o::EdgeStereoNavStatePVRPointXYZOnlyPose* e = vpEdgesStereo[i];
+
+            const size_t idx = vnIndexEdgeStereo[i];
+
+            if (pFrame->mvbOutlier[idx])
             {
                 e->computeError();
             }
 
             const float chi2 = e->chi2();
 
-            if(chi2>chi2Mono[it])
+            if (chi2 > chi2Stereo[it])
             {
                 pFrame->mvbOutlier[idx]=true;
                 e->setLevel(1);
@@ -623,6 +743,37 @@ int Optimizer::PoseOptimization(Frame *pFrame, Frame* pLastFrame, const IMUPrein
             if(it==2)
                 e->setRobustKernel(0);
         }
+    //rocky for stereo vio
+        for (size_t i = 0, iend = vpEdgesStereoLast.size(); i < iend; i++)
+        {
+            g2o::EdgeStereoNavStatePVRPointXYZOnlyPose* e = vpEdgesStereoLast[i];
+
+            const size_t idx = vnIndexEdgeStereoLast[i];
+
+            if (pLastFrame->mvbOutlier[idx])
+            {
+                e->computeError();
+            }
+
+            const float chi2 = e->chi2();
+
+            if (chi2 > chi2Stereo[it])
+            {
+                pLastFrame->mvbOutlier[idx] = true;
+                e->setLevel(1);
+                nBadLast++;
+            }
+            else
+            {
+                pLastFrame->mvbOutlier[idx] = false;
+                e->setLevel(0);
+            }
+
+            if (it == 2)
+                e->setRobustKernel(0);
+        }
+
+
 
         //        //Debug log
         //        cout<<nBad<<" bad Points in iter "<<it<<", rest points: "<<optimizer.edges().size()<<endl;
@@ -795,7 +946,14 @@ int Optimizer::PoseOptimization(Frame *pFrame, KeyFrame* pLastKF, const IMUPrein
     vpEdgesMono.reserve(N);
     vnIndexEdgeMono.reserve(N);
 
+    // for Stereo
+    vector<g2o::EdgeStereoNavStatePVRPointXYZOnlyPose*> vpEdgesStereo;
+    vector<size_t> vnIndexEdgeStereo;
+    vpEdgesStereo.reserve(N);
+    vnIndexEdgeStereo.reserve(N);
+
     const float deltaMono = sqrt(5.991);
+    const float deltaStereo = sqrt(7.815);
 
     {
     unique_lock<mutex> lock(MapPoint::mGlobalMutex);
@@ -831,16 +989,43 @@ int Optimizer::PoseOptimization(Frame *pFrame, KeyFrame* pLastKF, const IMUPrein
 
                 optimizer.addEdge(e);
 
-                vpEdgesMono.push_back(e);
-                vnIndexEdgeMono.push_back(i);
-            }
-            else  // Stereo observation
-            {
-                cerr<<"stereo shouldn't in poseoptimization"<<endl;
-            }
-        }
+                    vpEdgesMono.push_back(e);
+                    vnIndexEdgeMono.push_back(i);
+                }
+                else  // Stereo observation
+                {
+                    //cerr << "stereo shouldn't in poseoptimization" << endl;
+                    nInitialCorrespondences++;
+                    pFrame->mvbOutlier[i] = false;
 
-    }
+                    //SET EDGE
+                    Eigen::Matrix<double, 3, 1> obs; // 这里和单目不同
+                    const cv::KeyPoint &kpUn = pFrame->mvKeysUn[i];
+                    const float &kp_ur = pFrame->mvuRight[i];
+                    obs << kpUn.pt.x, kpUn.pt.y, kp_ur;// 这里和单目不同
+
+                    g2o::EdgeStereoNavStatePVRPointXYZOnlyPose* e = new g2o::EdgeStereoNavStatePVRPointXYZOnlyPose();// 这里和单目不同
+
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(FramePVRId)));
+                    e->setMeasurement(obs);
+                    const float invSigma2 = pFrame->mvInvLevelSigma2[kpUn.octave];
+                    Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                    e->setInformation(Info);
+
+                    g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(deltaStereo);
+
+                    e->SetParams(pFrame->fx, pFrame->fy, pFrame->cx, pFrame->cy, pFrame->mbf, Rbc, Pbc, Converter::toVector3d(pMP->GetWorldPos()));
+
+                    optimizer.addEdge(e);
+
+                    vpEdgesStereo.push_back(e);
+                    vnIndexEdgeStereo.push_back(i);
+                }
+            }
+
+    	}
     }
     //cout<<endl;
 
@@ -851,7 +1036,7 @@ int Optimizer::PoseOptimization(Frame *pFrame, KeyFrame* pLastKF, const IMUPrein
     // We perform 4 optimizations, after each optimization we classify observation as inlier/outlier
     // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
     const float chi2Mono[4]={5.991,5.991,5.991,5.991};
-    //const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
+    const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
     const int its[4]={10,10,10,10};
 
     //    //Debug log
@@ -896,6 +1081,36 @@ int Optimizer::PoseOptimization(Frame *pFrame, KeyFrame* pLastKF, const IMUPrein
             if(it==2)
                 e->setRobustKernel(0);
         }
+        //rocky  for stereo vio
+        for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++)
+        {
+            g2o::EdgeStereoNavStatePVRPointXYZOnlyPose* e = vpEdgesStereo[i];
+
+            const size_t idx = vnIndexEdgeStereo[i];
+
+            if (pFrame->mvbOutlier[idx])
+            {
+                e->computeError();
+            }
+
+            const float chi2 = e->chi2();
+
+            if (chi2 > chi2Stereo[it])
+            {
+                pFrame->mvbOutlier[idx] = true;
+                e->setLevel(1);
+                nBad++;
+            }
+            else
+            {
+                e->setLevel(0);
+                pFrame->mvbOutlier[idx] = false;
+            }
+
+            if (it == 2)
+                e->setRobustKernel(0);
+        }
+
 
         //        //Debug log
         //        cout<<nBad<<" bad Points in iter "<<it<<", rest points: "<<optimizer.edges().size()<<endl;
@@ -1184,8 +1399,20 @@ void Optimizer::LocalBundleAdjustmentNavState(KeyFrame *pCurKF, const std::list<
 
     vector<MapPoint*> vpMapPointEdgeMono;
     vpMapPointEdgeMono.reserve(nExpectedSize);
+//rocky add for stereo vio
+    vector<g2o::EdgeStereoNavStatePVRPointXYZ*> vpEdgesStereo;
+    vpEdgesStereo.reserve(nExpectedSize);
+
+    vector<KeyFrame*> vpEdgeKFStereo;
+    vpEdgeKFStereo.reserve(nExpectedSize);
+
+    vector<MapPoint*> vpMapPointEdgeStereo;
+    vpMapPointEdgeStereo.reserve(nExpectedSize);
+
+
 
     const float thHuberMono = sqrt(5.991);
+    const float thHuberStereo = sqrt(7.815);
 
     for(list<MapPoint*>::iterator lit=lLocalMapPoints.begin(), lend=lLocalMapPoints.end(); lit!=lend; lit++)
     {
@@ -1236,7 +1463,29 @@ void Optimizer::LocalBundleAdjustmentNavState(KeyFrame *pCurKF, const std::list<
                 else
                 {
                     // Test log
-                    cerr<<"Stereo not supported yet, why here?? check."<<endl;
+                   // cerr << "Stereo not supported yet, why here?? check." << endl;
+                    //SET EDGE
+                    Eigen::Matrix<double, 3, 1> obs; // 这里和单目不同
+                    //const cv::KeyPoint &kpUn = pKFi->mvKeysUn[i];
+                    const float &kp_ur = pKFi->mvuRight[mit->second];
+                    obs << kpUn.pt.x, kpUn.pt.y, kp_ur;// 这里和单目不同
+
+                    g2o::EdgeStereoNavStatePVRPointXYZ* e = new g2o::EdgeStereoNavStatePVRPointXYZ();// 这里和单目不同
+
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(id)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(optimizer.vertex(2 * pKFi->mnId)));
+                    e->setMeasurement(obs);
+                    const float invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
+                    Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                    e->setInformation(Info);
+
+                    g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberStereo);
+
+                    e->SetParams(pKFi->fx, pKFi->fy, pKFi->cx, pKFi->cy, pKFi->mbf, Rbc, Pbc);
+
+                    optimizer.addEdge(e);
                 }
             }
         }
@@ -1259,22 +1508,34 @@ void Optimizer::LocalBundleAdjustmentNavState(KeyFrame *pCurKF, const std::list<
 
     if(bDoMore)
     {
-    // Check inlier observations
-    for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++)
-    {
-        g2o::EdgeNavStatePVRPointXYZ* e = vpEdgesMono[i];
-        MapPoint* pMP = vpMapPointEdgeMono[i];
+        // Check inlier observations
+        for(size_t i=0, iend=vpEdgesMono.size(); i<iend;i++) {
+            g2o::EdgeNavStatePVRPointXYZ *e = vpEdgesMono[i];
+            MapPoint *pMP = vpMapPointEdgeMono[i];
 
-        if(pMP->isBad())
-            continue;
+            if (pMP->isBad())
+                continue;
 
-        if(e->chi2()>5.991 || !e->isDepthPositive())
-        {
-            e->setLevel(1);
+            if (e->chi2() > 5.991 || !e->isDepthPositive()) {
+                e->setLevel(1);
+            }
         }
 
-        e->setRobustKernel(0);
-    }
+        for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++)
+        {
+            g2o::EdgeStereoNavStatePVRPointXYZ* e = vpEdgesStereo[i];
+            MapPoint* pMP = vpMapPointEdgeStereo[i];
+
+            if (pMP->isBad())
+                continue;
+
+            if (e->chi2() > 7.815 || !e->isDepthPositive())
+            {
+                e->setLevel(1);
+            }
+
+            e->setRobustKernel(0);
+        }
 
 //    // Check inlier observations
 //    for(size_t i=0, iend=vpEdgesNavStatePVR.size(); i<iend; i++)
@@ -1298,9 +1559,9 @@ void Optimizer::LocalBundleAdjustmentNavState(KeyFrame *pCurKF, const std::list<
 //        //e->setRobustKernel(0);
 //    }
 
-    // Optimize again without the outliers
-    optimizer.initializeOptimization(0);
-    optimizer.optimize(10);
+        // Optimize again without the outliers
+        optimizer.initializeOptimization(0);
+        optimizer.optimize(10);
 
     }
 
@@ -1326,6 +1587,26 @@ void Optimizer::LocalBundleAdjustmentNavState(KeyFrame *pCurKF, const std::list<
 
         PosePointchi2 += e->chi2();
     }
+
+    for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++)
+    {
+        g2o::EdgeStereoNavStatePVRPointXYZ* e = vpEdgesStereo[i];
+        MapPoint* pMP = vpMapPointEdgeStereo[i];
+
+        if (pMP->isBad())
+            continue;
+
+        if (e->chi2() > 7.815 || !e->isDepthPositive())
+        {
+            KeyFrame* pKFi = vpEdgeKFStereo[i];
+            vToErase.push_back(make_pair(pKFi, pMP));
+        }
+
+        PosePointchi2 += e->chi2();
+    }
+
+
+
 
 //    // Debug log
 //    // Check inlier observations

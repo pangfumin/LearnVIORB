@@ -319,6 +319,93 @@ void EdgeNavStatePVRPointXYZ::linearizeOplus()
     _jacobianOplusXj = JNavState;
 }
 
+//rocky  add for stereo vio
+//
+void EdgeStereoNavStatePVRPointXYZ::linearizeOplus()
+{
+    const VertexSBAPointXYZ* vPoint = static_cast<const VertexSBAPointXYZ*>(_vertices[0]);
+    const VertexNavStatePVR* vNavState = static_cast<const VertexNavStatePVR*>(_vertices[1]);
+
+    const NavState& ns = vNavState->estimate();
+    Matrix3d Rwb = ns.Get_RotMatrix();
+    Vector3d Pwb = ns.Get_P();
+    const Vector3d& Pw = vPoint->estimate();
+
+    Matrix3d Rcb = Rbc.transpose();
+    Vector3d Pc = Rcb * Rwb.transpose() * (Pw - Pwb) - Rcb * Pbc;
+
+    double x = Pc[0];
+    double y = Pc[1];
+    double z = Pc[2];
+    double z_2 = z * z;
+
+    const Matrix3d R =  Rcb * Rwb.transpose() ;//Rcw
+    _jacobianOplusXi(0, 0) = -fx * R(0, 0) / z + fx * x * R(2, 0) / z_2;
+    _jacobianOplusXi(0, 1) = -fx * R(0, 1) / z + fx * x * R(2, 1) / z_2;
+    _jacobianOplusXi(0, 2) = -fx * R(0, 2) / z + fx * x * R(2, 2) / z_2;
+
+    _jacobianOplusXi(1, 0) = -fy * R(1, 0) / z + fy * y * R(2, 0) / z_2;
+    _jacobianOplusXi(1, 1) = -fy * R(1, 1) / z + fy * y * R(2, 1) / z_2;
+    _jacobianOplusXi(1, 2) = -fy * R(1, 2) / z + fy * y * R(2, 2) / z_2;
+
+    _jacobianOplusXi(2, 0) = _jacobianOplusXi(0, 0) - bf * R(2, 0) / z_2;
+    _jacobianOplusXi(2, 1) = _jacobianOplusXi(0, 1) - bf * R(2, 1) / z_2;
+    _jacobianOplusXi(2, 2) = _jacobianOplusXi(0, 2) - bf * R(2, 2) / z_2;
+
+
+    // Jacobian of camera projection
+    Matrix<double, 3, 3> stereoMaux;
+    stereoMaux.setZero();
+    stereoMaux(0, 0) = fx;
+    stereoMaux(0, 1) = 0;
+    stereoMaux(0, 2) = -x / z * fx;
+    stereoMaux(1, 0) = 0;
+    stereoMaux(1, 1) = fy;
+    stereoMaux(1, 2) = -y / z * fy;
+    stereoMaux(2, 0) = fx;
+    stereoMaux(2, 1) = 0;
+    stereoMaux(2, 2) = -x / z * fx + bf / z;
+    Matrix<double, 3, 3> stereoJpi = -stereoMaux / z; //重投影误差对于相机坐标系下的点Pc的雅克比矩阵,注意：这里已经加了负号
+
+
+//rocky
+//jacobian  of Pc with PVR
+    Matrix<double, 3, 9> JPcPVR = Matrix<double, 3, 9>::Zero();
+    JPcPVR.block<3, 3>(0, 0) = -Rcb;
+
+    Vector3d Paux = Rcb * Rwb.transpose() * (Pw - Pwb);
+    JPcPVR.block<3, 3>(0, 6) = Sophus::SO3::hat(Paux) * Rcb;
+
+    _jacobianOplusXj = stereoJpi * JPcPVR;
+
+
+
+
+    /*
+        // Jacobian of Pc/error w.r.t dPwb
+        //Matrix3d J_Pc_dPwb = -Rcb;//j见orbvio论文的式（5）
+        Matrix<double,2,3> JdPwb = - Jpi * (-Rcb);
+        // Jacobian of Pc/error w.r.t dRwb
+        Vector3d Paux = Rcb*Rwb.transpose()*(Pw-Pwb);
+        //Matrix3d J_Pc_dRwb = Sophus::SO3::hat(Paux) * Rcb;
+        Matrix<double,2,3> JdRwb = - Jpi * (Sophus::SO3::hat(Paux) * Rcb);
+
+        // Jacobian of Pc w.r.t NavState
+        // order in 'update_': dP, dV, dPhi
+        Matrix<double,2,9> JNavState = Matrix<double,2,9>::Zero();
+        JNavState.block<2,3>(0,0) = JdPwb;
+        //JNavState.block<2,3>(0,3) = 0;
+        JNavState.block<2,3>(0,6) = JdRwb;
+        //JNavState.block<2,3>(0,9) = 0;
+        //JNavState.block<2,3>(0,12) = 0;
+
+        // Jacobian of error w.r.t NavState
+        _jacobianOplusXj = JNavState;
+        */
+
+}
+
+
 void EdgeNavStatePVRPointXYZOnlyPose::linearizeOplus()
 {
     const VertexNavStatePVR* vNSPVR = static_cast<const VertexNavStatePVR*>(_vertices[0]);
@@ -371,6 +458,52 @@ void EdgeNavStatePVRPointXYZOnlyPose::linearizeOplus()
     // Jacobian of error w.r.t NavStatePVR
     _jacobianOplusXi = JNavState;
 }
+
+//rocky for stereo vio  EdgeStereoNavStatePVRPointXYZOnlyPose
+void EdgeStereoNavStatePVRPointXYZOnlyPose::linearizeOplus()
+{
+    const VertexNavStatePVR* vNSPVR = static_cast<const VertexNavStatePVR*>(_vertices[0]);
+
+    const NavState& ns = vNSPVR->estimate();
+    Matrix3d Rwb = ns.Get_RotMatrix();
+    Vector3d Pwb = ns.Get_P();
+    //const Vector3d& Pw = vPoint->estimate();
+
+    Matrix3d Rcb = Rbc.transpose();
+    Vector3d Pc = Rcb * Rwb.transpose() * (Pw - Pwb) - Rcb * Pbc;
+
+    double x = Pc[0];
+    double y = Pc[1];
+    double z = Pc[2];
+    //double z_2 = z * z;
+
+    // Jacobian of camera projection
+    Matrix<double, 3, 3> stereoMaux;
+    stereoMaux.setZero();
+    stereoMaux(0, 0) = fx;
+    stereoMaux(0, 1) = 0;
+    stereoMaux(0, 2) = -x / z * fx;
+    stereoMaux(1, 0) = 0;
+    stereoMaux(1, 1) = fy;
+    stereoMaux(1, 2) = -y / z * fy;
+    stereoMaux(2, 0) = fx;
+    stereoMaux(2, 1) = 0;
+    stereoMaux(2, 2) = -x / z * fx + bf / z;
+    Matrix<double, 3, 3>stereoJpi = -stereoMaux / z; //重投影误差对于相机坐标系下的点Pc的雅克比矩阵,注意：这里已经加了负号
+
+
+//rocky
+//jacobian  of Pc with PVR
+    Matrix<double, 3, 9> JPcPVR = Matrix<double, 3, 9>::Zero();
+    JPcPVR.block<3, 3>(0, 0) = -Rcb;
+
+    Vector3d Paux = Rcb * Rwb.transpose() * (Pw - Pwb);
+    JPcPVR.block<3, 3>(0, 6) = Sophus::SO3::hat(Paux) * Rcb;
+
+    // Jacobian of error w.r.t NavStatePVR
+    _jacobianOplusXi =stereoJpi * JPcPVR;
+}
+
 
 void EdgeNavStatePriorPVRBias::computeError()
 {

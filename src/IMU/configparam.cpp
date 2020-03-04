@@ -114,4 +114,27 @@ bool ConfigParam::GetAccMultiply9p8()
     return _bAccMultiply9p8;
 }
 
+//派生类构造函数
+StereoConfigParam::StereoConfigParam(std::string configfile):ConfigParam(configfile)
+{
+    cv::FileStorage fsSettings(configfile, cv::FileStorage::READ);
+    fsSettings["LEFT.K"] >> _K_l;
+    fsSettings["RIGHT.K"] >> _K_r;
+
+    fsSettings["LEFT.P"] >> _P_l;
+    fsSettings["RIGHT.P"] >> _P_r;
+
+    fsSettings["LEFT.R"] >> _R_l;
+    fsSettings["RIGHT.R"] >> _R_r;
+
+    fsSettings["LEFT.D"] >> _D_l;
+    fsSettings["RIGHT.D"] >> _D_r;
+
+     _rows_l = fsSettings["LEFT.height"];
+     _cols_l = fsSettings["LEFT.width"];
+     _rows_r = fsSettings["RIGHT.height"];
+     _cols_r = fsSettings["RIGHT.width"];
+}
+
+
 }

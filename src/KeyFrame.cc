@@ -255,7 +255,7 @@ void KeyFrame::ComputePreInt(void)
             // Test log
             if(dt <= 0)
             {
-                cerr<<std::fixed<<std::setprecision(3)<<"dt = "<<dt<<", this vs next time: "<<imu._t<<" vs "<<nextt<<endl;
+                cerr<<std::fixed<<std::setprecision(3)<<"keyframe:dt = "<<dt<<", this vs next time: "<<imu._t<<" vs "<<nextt<<endl;
                 std::cerr.unsetf ( std::ios::showbase );                // deactivate showbase
             }
         }

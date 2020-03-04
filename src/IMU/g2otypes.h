@@ -182,6 +182,95 @@ protected:
     Vector3d Pbc;
 };
 
+//rocky  for stereo vio
+class EdgeStereoNavStatePVRPointXYZ : public BaseBinaryEdge<3, Vector3d, VertexSBAPointXYZ, VertexNavStatePVR>
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    EdgeStereoNavStatePVRPointXYZ() : BaseBinaryEdge<3, Vector3d, VertexSBAPointXYZ, VertexNavStatePVR>() {}
+
+    bool read(std::istream& is) {return true;}
+
+    bool write(std::ostream& os) const {return true;}
+
+    void computeError() {
+        Vector3d Pc = computePc();
+        Vector3d obs(_measurement);
+
+        _error = obs - cam_project(Pc,bf);//
+    }
+
+    bool isDepthPositive() {
+        Vector3d Pc = computePc();
+        return Pc(2)>0.0;
+    }
+
+    Vector3d computePc() {
+        const VertexSBAPointXYZ* vPoint = static_cast<const VertexSBAPointXYZ*>(_vertices[0]);
+        const VertexNavStatePVR* vNavState = static_cast<const VertexNavStatePVR*>(_vertices[1]);
+
+        const NavState& ns = vNavState->estimate();
+        Matrix3d Rwb = ns.Get_RotMatrix();
+        Vector3d Pwb = ns.Get_P();
+        const Vector3d& Pw = vPoint->estimate();
+
+        Matrix3d Rcb = Rbc.transpose();
+        Vector3d Pc = Rcb * Rwb.transpose() * (Pw - Pwb) - Rcb * Pbc;
+
+        return Pc;
+        //Vector3d Pwc = Rwb*Pbc + Pwb;
+        //Matrix3d Rcw = (Rwb*Rbc).transpose();
+        //Vector3d Pcw = -Rcw*Pwc;
+        //Vector3d Pc = Rcw*Pw + Pcw;
+    }
+    inline Vector2d project2d(const Vector3d& v) const {
+        Vector2d res;
+        res(0) = v(0)/v(2);
+        res(1) = v(1)/v(2);
+        return res;
+    }
+    // Vector2d cam_project(const Vector3d & trans_xyz) const {
+    //     Vector2d proj = project2d(trans_xyz);
+    //     Vector2d res;
+    //     res[0] = proj[0]*fx + cx;
+    //     res[1] = proj[1]*fy + cy;
+    //     return res;
+    // }
+
+Vector3d cam_project(const Vector3d & trans_xyz, const float &bf) const{
+  const float invz = 1.0f/trans_xyz[2];
+  Vector3d res;
+  res[0] = trans_xyz[0]*invz*fx + cx;
+  res[1] = trans_xyz[1]*invz*fy + cy;
+  res[2] = res[0] - bf*invz;
+  return res;
+}
+
+    //
+    virtual void linearizeOplus();
+//TODO   新加了bf，所以用该该函数的地方需要调整
+    void SetParams(const double& fx_, const double& fy_, const double& cx_, const double& cy_,const double &bf_,
+                   const Matrix3d& Rbc_, const Vector3d& Pbc_) {
+        fx = fx_;
+        fy = fy_;
+        cx = cx_;
+        cy = cy_;
+        bf=bf_;
+        Rbc = Rbc_;
+        Pbc = Pbc_;
+    }
+
+protected:
+    // Camera intrinsics
+    double fx, fy, cx, cy,bf;
+    // Camera-IMU extrinsics
+    Matrix3d Rbc;
+    Vector3d Pbc;
+};
+
+
+
 class EdgeNavStatePVRPointXYZOnlyPose : public BaseUnaryEdge<2, Vector2d, VertexNavStatePVR>
 {
 public:
@@ -259,6 +348,92 @@ protected:
     // Point position in world frame
     Vector3d Pw;
 };
+
+//rocky for stereo vio
+//
+class EdgeStereoNavStatePVRPointXYZOnlyPose : public BaseUnaryEdge<3, Vector3d, VertexNavStatePVR>
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+    //EdgeStereoNavStatePVRPointXYZOnlyPose(){}
+    EdgeStereoNavStatePVRPointXYZOnlyPose() : BaseUnaryEdge<3, Vector3d, VertexNavStatePVR>(){};
+
+    bool read(std::istream& is){return true;}
+
+    bool write(std::ostream& os) const{return true;}
+
+    void computeError() {
+        Vector3d Pc = computePc();
+        Vector3d obs(_measurement);
+
+        _error = obs - cam_project(Pc,bf);
+    }
+
+    bool isDepthPositive() {
+        Vector3d Pc = computePc();
+        return Pc(2)>0.0;
+    }
+
+    Vector3d computePc() {
+        const VertexNavStatePVR* vNSPVR = static_cast<const VertexNavStatePVR*>(_vertices[0]);
+
+        const NavState& ns = vNSPVR->estimate();
+        Matrix3d Rwb = ns.Get_RotMatrix();
+        Vector3d Pwb = ns.Get_P();
+        //const Vector3d& Pw = vPoint->estimate();
+
+        Matrix3d Rcb = Rbc.transpose();
+        Vector3d Pc = Rcb * Rwb.transpose() * (Pw - Pwb) - Rcb * Pbc;
+
+        return Pc;
+        //Vector3d Pwc = Rwb*Pbc + Pwb;
+        //Matrix3d Rcw = (Rwb*Rbc).transpose();
+        //Vector3d Pcw = -Rcw*Pwc;
+        //Vector3d Pc = Rcw*Pw + Pcw;
+    }
+
+
+    inline Vector2d project2d(const Vector3d& v) const {
+        Vector2d res;
+        res(0) = v(0)/v(2);
+        res(1) = v(1)/v(2);
+        return res;
+    }
+Vector3d cam_project(const Vector3d & trans_xyz, const float &bf) const{
+  const float invz = 1.0f/trans_xyz[2];
+  Vector3d res;
+  res[0] = trans_xyz[0]*invz*fx + cx;
+  res[1] = trans_xyz[1]*invz*fy + cy;
+  res[2] = res[0] - bf*invz;
+  return res;
+}
+
+    //
+    virtual void linearizeOplus();
+//TODO  这里加了bf
+    void SetParams(const double& fx_, const double& fy_, const double& cx_, const double& cy_,const double &bf_,
+                   const Matrix3d& Rbc_, const Vector3d& Pbc_, const Vector3d& Pw_) {
+        fx = fx_;
+        fy = fy_;
+        cx = cx_;
+        cy = cy_;
+        bf=bf_;
+        Rbc = Rbc_;
+        Pbc = Pbc_;
+        Pw = Pw_;
+    }
+
+protected:
+    // Camera intrinsics
+    double fx, fy, cx, cy, bf;
+    // Camera-IMU extrinsics
+    Matrix3d Rbc;
+    Vector3d Pbc;
+    // Point position in world frame
+    Vector3d Pw;
+};
+
 
 /**
  * @brief The EdgeNavStatePrior class

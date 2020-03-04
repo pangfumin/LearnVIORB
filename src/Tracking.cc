@@ -491,6 +491,50 @@ cv::Mat Tracking::GrabImageMonoVI(const cv::Mat &im, const std::vector<IMUData> 
     return mCurrentFrame.mTcw.clone();
 }
 
+//NOTE    GrabImageStereoVI(imLeft,imRight,vimu,timestamp);
+cv::Mat Tracking::GrabImageStereoVI(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const std::vector<IMUData> &vimu, const double &timestamp)
+{
+    mvIMUSinceLastKF.insert(mvIMUSinceLastKF.end(), vimu.begin(), vimu.end());
+    mImGray = imRectLeft;
+    cv::Mat imGrayRight = imRectRight;
+
+    if (mImGray.channels() == 3)
+    {
+        if (mbRGB)
+        {
+            cvtColor(mImGray, mImGray, CV_RGB2GRAY);
+            cvtColor(imGrayRight, imGrayRight, CV_RGB2GRAY);
+        }
+        else
+        {
+            cvtColor(mImGray, mImGray, CV_BGR2GRAY);
+            cvtColor(imGrayRight, imGrayRight, CV_BGR2GRAY);
+        }
+    }
+    else if (mImGray.channels() == 4)
+    {
+        if (mbRGB)
+        {
+            cvtColor(mImGray, mImGray, CV_RGBA2GRAY);
+            cvtColor(imGrayRight, imGrayRight, CV_RGBA2GRAY);
+        }
+        else
+        {
+            cvtColor(mImGray, mImGray, CV_BGRA2GRAY);
+            cvtColor(imGrayRight, imGrayRight, CV_BGRA2GRAY);
+        }
+    }
+
+//NOTE
+    mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, vimu, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpLastKeyFrame);
+
+    Track();
+
+    return mCurrentFrame.mTcw.clone();
+}
+
+
+
 //-------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------
@@ -1012,8 +1056,19 @@ void Tracking::StereoInitialization()
         mCurrentFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
 
         // Create KeyFrame
-        KeyFrame* pKFini = new KeyFrame(mCurrentFrame,mpMap,mpKeyFrameDB);
+        // KeyFrame* pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB);
+//rocky  for stereo vio
+//TODO  这里应该是mvIMUSinceLastKF.back()
+        vector<IMUData> vimu1;
+        vimu1.push_back(mvIMUSinceLastKF.back());
+        KeyFrame* pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB, vimu1, NULL);
+        pKFini->ComputePreInt();
+// Clear IMUData buffer
+        mvIMUSinceLastKF.clear();
+        pKFini->ComputeBoW();
 
+
+////////////////////////
         // Insert KeyFrame in the map
         mpMap->AddKeyFrame(pKFini);
 

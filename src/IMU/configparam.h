@@ -7,6 +7,7 @@
 namespace ORB_SLAM2
 {
 
+//for monocular orbvio
 class ConfigParam
 {
 public:
@@ -45,6 +46,24 @@ private:
     static double _g;
 
 };
+
+//for  stereo orbvio
+class StereoConfigParam : public  ConfigParam
+{
+public:
+
+EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+StereoConfigParam(std::string configfile);
+
+cv::Mat  _K_l, _K_r, _P_l, _P_r, _R_l, _R_r, _D_l, _D_r;
+int  _rows_l, _cols_l, _rows_r, _cols_r;
+
+private:
+ 
+
+};
+
+
 
 }
 

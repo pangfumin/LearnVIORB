@@ -48,6 +48,7 @@ public:
     void DeleteBadInLocalWindow(void);
 
     bool TryInitVIO(void);
+    bool TryInitStereoVIO(void);
     bool GetVINSInited(void);
     void SetVINSInited(bool flag);
 
