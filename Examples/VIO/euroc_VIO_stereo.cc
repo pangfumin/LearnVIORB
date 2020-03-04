@@ -23,261 +23,373 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
-#include <boost/concept_check.hpp>
+
+//#include<ros/ros.h>
+//#include <cv_bridge/cv_bridge.h>
 
 #include<opencv2/core/core.hpp>
+#include<opencv2/highgui/highgui.hpp>
+#include<opencv2/imgproc/imgproc.hpp>
+#include"System.h"
+//#include"../../../include/System.h"
 
-#include "../../src/IMU/imudata.h"
-#include "../../src/IMU/configparam.h"
+//#include "MsgSync/MsgSynchronizer.h"
 
-#include<System.h>
+#include "src/IMU/imudata.h"
+#include "src/IMU/configparam.h"
+//#include <rosbag/bag.h>
+//#include <rosbag/view.h>
 
+#include <boost/foreach.hpp>
+#include <fstream>
+#include <time.h>
+#include <string>
+#include <iostream>
+#include <stdlib.h>
+#include <memory>
+#include <functional>
+#include <atomic>
 using namespace std;
 
-void LoadImages(const string &strImagePath, const string &strPathTimes,
-                vector<string> &vstrImages, vector<double> &vTimeStamps);
-void LoadIMUData(const string &strIMUDataFilePath, 
-		 std::vector<ORB_SLAM2::IMUData>& vimuData);
+/*class ImageGrabber
+{
+public:
+    ImageGrabber(ORB_SLAM2::System* pSLAM):mpSLAM(pSLAM){}
+
+   // void GrabImage(const sensor_msgs::ImageConstPtr& msg);
+
+    ORB_SLAM2::System* mpSLAM;
+};
+*/
+
+typedef struct ImageList
+{
+    double timeStamp;
+    string imgName;
+} ICell;
+
+void loadImageList(char * imagePath, std::vector<ICell> &iListData)
+{
+    ifstream inf;
+    inf.open(imagePath, ifstream::in);
+    const int cnt = 2;          // 你要输出的个数
+
+    string line;
+    //int i = 0;
+    int j = 0;
+    size_t comma = 0;
+    size_t comma2 = 0;
+    ICell temp;
+    getline(inf, line);
+    while (!inf.eof())
+    {
+        getline(inf, line);
+
+        comma = line.find(',', 0);
+        //string temp1 = line.substr(0,comma).substr(0,10);
+        //temp.timeStamp = (unsigned long)atoi(line.substr(0,comma).c_str());
+        //cout <<line.substr(0,comma).c_str()<<endl;
+        stringstream ss;
+        ss << line.substr(0, comma).c_str();
+        ss >> temp.timeStamp ;
+        temp.timeStamp = temp.timeStamp / 1e9;
+
+        while (comma < line.size() && j != cnt - 1)
+        {
+
+            comma2 = line.find(',', comma + 1);
+            //i = atof(line.substr(comma + 1,comma2-comma-1).c_str());
+            temp.imgName = line.substr(comma + 1, comma2 - comma - 1).c_str();
+            ++j;
+            comma = comma2;
+        }
+        iListData.push_back(temp);
+        j = 0;
+    }
+    //经过调试发现上面的程序多加了最后一行数据，这里去掉最后一行数据
+    iListData.pop_back();
+    inf.close();
+
+    //  return 0;
+}
+
+
+void loadIMUFile(char * imuPath, std::vector<ORB_SLAM2::IMUData> &vimuData)
+{
+    ifstream inf;
+    inf.open(imuPath, ifstream::in);
+    const int cnt = 7;          // 你要输出的个数
+
+    string line;
+    //int i = 0;
+    int j = 0;
+    size_t comma = 0;
+    size_t comma2 = 0;
+
+    char imuTime[14] = {0};
+    double acc[3] = {0.0};
+    double grad[3] = {0.0};
+    double imuTimeStamp = 0;
+
+    getline(inf, line);
+    while (!inf.eof())
+    {
+        getline(inf, line);
+
+        comma = line.find(',', 0);
+        //string temp = line.substr(0,comma);
+        stringstream ss;
+        ss << line.substr(0, comma).c_str();
+        ss >> imuTimeStamp;
+
+        //imuTimeStamp = (unsigned long)atoi(line.substr(0,comma).c_str());
+
+        //cout<<line.substr(0,comma).c_str()<<' ';
+        //memcpy(imuTimeStamp,line.substr(0,comma).c_str(),line.substr(0,comma).length);
+        while (comma < line.size() && j != cnt - 1)
+        {
+
+            comma2 = line.find(',', comma + 1);
+            switch (j)
+            {
+                case 0:
+                    grad[0] = atof(line.substr(comma + 1, comma2 - comma - 1).c_str());
+                    break;
+                case 1:
+                    grad[1] = atof(line.substr(comma + 1, comma2 - comma - 1).c_str());
+                    break;
+                case 2:
+                    grad[2] = atof(line.substr(comma + 1, comma2 - comma - 1).c_str());
+                    break;
+                case 3:
+                    acc[0] = atof(line.substr(comma + 1, comma2 - comma - 1).c_str());
+                    break;
+                case 4:
+                    acc[1] = atof(line.substr(comma + 1, comma2 - comma - 1).c_str());
+                    break;
+                case 5:
+                    acc[2] = atof(line.substr(comma + 1, comma2 - comma - 1).c_str());
+                    break;
+            }
+            //cout<<line.substr(comma + 1,comma2-comma-1).c_str()<<' ';
+            ++j;
+            comma = comma2;
+        }
+        ORB_SLAM2::IMUData tempImu(grad[0], grad[1], grad[2], acc[0], acc[1], acc[2], imuTimeStamp / 1e9);
+        vimuData.push_back(tempImu);
+        j = 0;
+    }
+    //经过调试发现上面的程序多加了最后一行数据，这里去掉最后一行数据
+    vimuData.pop_back();
+
+    inf.close();
+
+    //return 0;
+}
 
 int main(int argc, char **argv)
 {
-    if(argc != 7)
-    {
-        cerr << endl << "Usage: ./mono_tum path_to_vocabulary path_to_settings "
-                        "path_to_image0_folder  path_to_image1_folder path_to_times_file path_to_imu_file"  << endl;
-        return 1;
-    }
-    
-    
-     
-    // Retrieve paths to images
-    vector<string> vstrImage0Filenames;
-    vector<string> vstrImage1Filenames;
-    vector<double> vTimestamps;
-    LoadImages(string(argv[3]), string(argv[5]), vstrImage0Filenames, vTimestamps);
-    LoadImages(string(argv[4]), string(argv[5]), vstrImage1Filenames, vTimestamps);
+    //ros::init(argc, argv, "Mono");
+    //ros::start();
 
-    
-    int nImages = vstrImage0Filenames.size();
-    
-    
-    std::vector<ORB_SLAM2::IMUData> vimuData;
-    LoadIMUData(string(argv[6]),vimuData);
-    
-    
-    std::cout<<"Get Image: "<<nImages<<" "<<"Get IMU： "<< vimuData.size()<<std::endl;
-
-    if(nImages<=0)
+    if (argc != 8)
     {
-        cerr << "ERROR: Failed to load images" << endl;
+        // cerr << endl << "Usage: rosrun ORB_SLAM2 Mono path_to_vocabulary path_to_settings" << endl;
+        //后面三个参数分别为：imu的数据（包括角速度，加速度，共6维）；cam0时间戳和文件名的联系文件(包括timestamp [ns],filename。共二维)；cma0的图片;cam1的图片；;用于保存最后的轨迹的字符串名 如V1_03_difficult
+        cerr << endl << "Usage: ./project path_to_ORBVOC.TXT path_to_euroc.yaml path_to_imu/data.csv path_to_cam0/data.csv path_to_cam0/data path_to_cam1/data strName" << endl;
+        // ros::shutdown();
         return 1;
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
-    
-    ORB_SLAM2::ConfigParam config(argv[2]);
+    ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::STEREO, true);
 
-    // Read rectification parameters
-    cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
+    ORB_SLAM2::StereoConfigParam config(argv[2]);
+
+    /**
+     * @brief added data sync
+     */
+    double imageMsgDelaySec = config.GetImageDelayToIMU();
+
+    // 3dm imu output per g. 1g=9.80665 according to datasheet
+    const double g3dm = 9.80665;
+    const bool bAccMultiply98 = config.GetAccMultiply9p8();
+    //cout<<"-----------------------------------------------------------------------------"<<endl;
+    char *fullPath = new char[500];// = {0};
+    char *fullPathR = new char[500];// = {0};
+    memset(fullPath, 0, 500);
+    memset(fullPath, 0, 500);
+
+    //imgData>>imageTimeStamp>>imageName;
+    //imuDataFile>>imuTimeStamp>>grad[0]>>grad[1]>>grad[2]>>acc[0]>>acc[1]>>acc[2];
+    std::vector<ORB_SLAM2::IMUData> allimuData;
+    std::vector<ICell> iListData;
+    //loadIMUFile("/home/fyj/Code/C++/LearnVIORB/Examples/ROS/ORB_VIO/v2_03_diff/V2_03_difficult/mav0/imu0/data.csv",allimuData);
+    loadIMUFile(argv[3], allimuData);
+    //cout<<"loading imu finished"<<endl;
+    //loadImageList("/home/fyj/Code/C++/LearnVIORB/Examples/ROS/ORB_VIO/v2_03_diff/V2_03_difficult/mav0/cam0/data.csv",iListData);
+
+//这里以左相机的相机帧数为准，把左相机图像的数据帧，图像名称存到iListData
+    loadImageList(argv[4], iListData);
+
+    //cout<<iListData.size()<<"------------"<<allimuData.size()<<endl;
+    //cv::waitKey(0);
+
+//
+//为了使allimuData中的imu的第一帧和iListData中图像的第一帧对齐，去除了ListData中图像的第一帧时刻之前的imu数据
+    double ImgFirstTime = iListData[0].timeStamp;
+    for (int j = 0; j < allimuData.size() - 1; j++)
     {
-        cerr << "ERROR: Wrong path to settings" << endl;
-        return -1;
+        if (ImgFirstTime - allimuData[j]._t < 1 / 1e4)
+        {
+
+            allimuData.erase(allimuData.begin(), allimuData.begin() + j);
+            break;
+        }
     }
 
-    cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
-    fsSettings["LEFT.K"] >> K_l;
-    fsSettings["RIGHT.K"] >> K_r;
+    cout << std::setprecision(13) << "first Img time, first Imu timeStamp: " << iListData[0].timeStamp << ",     " << allimuData[0]._t << endl;
+    if (iListData[0].timeStamp - allimuData[0]._t > 1 / 1e4)
+        cerr << "the timestamp of first Imu is not equal to the first Img!" << endl;
 
-    fsSettings["LEFT.P"] >> P_l;
-    fsSettings["RIGHT.P"] >> P_r;
 
-    fsSettings["LEFT.R"] >> R_l;
-    fsSettings["RIGHT.R"] >> R_r;
-
-    fsSettings["LEFT.D"] >> D_l;
-    fsSettings["RIGHT.D"] >> D_r;
-
-    int rows_l = fsSettings["LEFT.height"];
-    int cols_l = fsSettings["LEFT.width"];
-    int rows_r = fsSettings["RIGHT.height"];
-    int cols_r = fsSettings["RIGHT.width"];
-
-    if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
-       rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
-    {
-        cerr << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
-        return -1;
-    }
-
-    cv::Mat M1l,M2l,M1r,M2r;
-    cv::initUndistortRectifyMap(K_l,D_l,R_l,P_l.rowRange(0,3).colRange(0,3),cv::Size(cols_l,rows_l),CV_32F,M1l,M2l);
-    cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,M1r,M2r);
 
 
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
-    vTimesTrack.resize(nImages);
+    vTimesTrack.resize(iListData.size());
 
-    cout << endl << "-------" << endl;
-    cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl << endl;
-    
-    int imuStart = 0;
-    int imuCnt = imuStart;
-
-    // Main loop
-    cv::Mat im0, im1;
-    for(int ni=0; ni<nImages; ni++)
+    int nImages = iListData.size();
+    if (nImages < 1)
     {
-        // Read image from file
-        im0 = cv::imread(vstrImage0Filenames[ni],CV_LOAD_IMAGE_UNCHANGED);
-        im1 = cv::imread(vstrImage1Filenames[ni],CV_LOAD_IMAGE_UNCHANGED);
-        double tframe = vTimestamps[ni];
+        cerr << endl << "There is no enough images." << endl;
+    }
 
-        if(im0.empty() || im1.empty())
+//双目矫正相关参数设置
+    if (config._K_l.empty() || config._K_r.empty() || config._P_l.empty() || config._P_r.empty() || config._R_l.empty() || config._R_r.empty() || config._D_l.empty() || config._D_r.empty() ||
+        config._rows_l == 0 || config._rows_r == 0 || config._cols_l == 0 || config._cols_r == 0)
+    {
+        cerr << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
+        return -1;
+    }
+
+    cv::Mat M1l, M2l, M1r, M2r;
+    cv::initUndistortRectifyMap(config._K_l, config._D_l, config._R_l, config._P_l.rowRange(0, 3).colRange(0, 3), cv::Size(config._cols_l, config._rows_l), CV_32F, M1l, M2l);
+    cv::initUndistortRectifyMap(config._K_r, config._D_r, config._R_r, config._P_r.rowRange(0, 3).colRange(0, 3), cv::Size(config._cols_r, config._rows_r), CV_32F, M1r, M2r);
+
+    cv::Mat im, imR, imLeftRect, imRightRect;
+
+
+
+    for (int j = 0; j < iListData.size() - 1; j++)
+    {
+        std::vector<ORB_SLAM2::IMUData> vimuData;
+        /*
+        *imu 的频率是200HZ 图像帧率是20HZ 所以简单的认为每一帧图像对应10个imu数据
+        */
+        for (unsigned int i = 0; i < 10; i++)
+        {
+            if (bAccMultiply98)
+            {
+                allimuData[10 * j + i]._a(0) *= g3dm;
+                allimuData[10 * j + i]._a(1) *= g3dm;
+                allimuData[10 * j + i]._a(2) *= g3dm;
+            }
+            ORB_SLAM2::IMUData imudata(allimuData[10 * j + i]._g(0), allimuData[10 * j + i]._g(1), allimuData[10 * j + i]._g(2),
+                                       allimuData[10 * j + i]._a(0), allimuData[10 * j + i]._a(1), allimuData[10 * j + i]._a(2), allimuData[10 * j + i]._t); //j*0.0005+i*0.00005
+            vimuData.push_back(imudata);
+        }
+
+        //cout<<"IMU FINISHED READING"<<endl;
+        //发现读取txt时，图像文件名后多了一个‘/r’，因此需要截掉这个字符。
+        //数据集中imu和img的第一帧的时间戳相同，但是SLAM.TrackMonoVI中却要求img大概要和vimudata的最后一帧对齐，所以这里取了iListData[j+1]
+        string temp = iListData[j + 1].imgName.substr(0, iListData[j].imgName.size() - 1);
+        //sprintf(fullPath,"%s/%s","/home/fyj/Code/C++/LearnVIORB/Examples/ROS/ORB_VIO/v2_03_diff/V2_03_difficult/mav0/cam0/data",temp.c_str());
+
+        //这里以左相机的图像帧数为准，并且在euroc数据集中，同一时刻左右图像的名称相同(以时间戳命名)都为temp
+        sprintf(fullPath, "%s/%s", argv[5], temp.c_str());
+        sprintf(fullPathR, "%s/%s", argv[6], temp.c_str());
+        im = cv::imread(fullPath, 0);
+        imR = cv::imread(fullPathR, 0);
+
+        //  cout<<"-----------------------FYJ----------------------"<<iListData[j].timeStamp<<endl;
+
+        //忽略掉最开始的config._testDiscardTime内的时间段
+        static double startT = -1;
+        if (startT < 0)
+            startT = iListData[j + 1].timeStamp;
+        if (iListData[j + 1].timeStamp < startT + config._testDiscardTime)
+        {
+            im = cv::Mat::zeros(im.rows, im.cols, im.type());
+            imR = cv::Mat::zeros(im.rows, im.cols, im.type());
+        }
+
+        if (im.empty())
         {
             cerr << endl << "Failed to load image at: "
-                 <<  vstrImage0Filenames[ni] << endl;
+                 << fullPath << endl;
             return 1;
         }
-        
-        // get IMU data
-        std::vector<ORB_SLAM2::IMUData> imuReadingBatch;
-        while(vimuData.at(imuCnt)._t < tframe)
-	{
-	  imuReadingBatch.push_back(vimuData.at(imuCnt));
-	  imuCnt ++;
-	 // std::cout<<vimuData.at(imuCnt)._g.transpose()<<std::endl;
-	  
-	}
 
-#ifdef COMPILEDWITHC11
+        if (imR.empty())
+        {
+            cerr << endl << "Failed to load image at: "
+                 << fullPathR << endl;
+            return 1;
+        }
+        memset(fullPath, 0, 500);
+        memset(fullPathR, 0, 500);
+
+        //双目矫正
+        cv::remap(im, imLeftRect, M1l, M2l, cv::INTER_LINEAR);
+        cv::remap(imR, imRightRect, M1r, M2r, cv::INTER_LINEAR);
+
+
+        //开始TrackMonoVI，TrackStereoVI
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-#else
-        std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
-#endif
+        //SLAM.TrackMonoVI(im, vimuData, iListData[j+1].timeStamp- imageMsgDelaySec);
+        //NOTE
+        //cout<< std::setprecision(13) <<"Now is Tracking Img at time: "<< iListData[j + 1].timeStamp<<endl;
+        SLAM.TrackStereoVI(imLeftRect, imRightRect, vimuData, iListData[j + 1].timeStamp - imageMsgDelaySec);
 
-        cv::Mat imLeftRect, imRightRect;
-        cv::remap(im0,imLeftRect,M1l,M2l,cv::INTER_LINEAR);
-        cv::remap(im1,imRightRect,M1r,M2r,cv::INTER_LINEAR);
-
-        // Pass the image to the SLAM system
-        SLAM.TrackStereoVI(imLeftRect,imRightRect, imuReadingBatch, tframe);
-	
-#ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-#else
-        std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
-#endif
-
-        double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-
-        vTimesTrack[ni]=ttrack;
-
-        // Wait to load the next frame
-        double T=0;
-        if(ni<nImages-1)
-            T = vTimestamps[ni+1]-tframe;
-        else if(ni>0)
-            T = tframe-vTimestamps[ni-1];
-
-        if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+        double ttrack = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+        vTimesTrack[j] = ttrack;
+        bool bstop = false;
+        //cout<<"----------------------------------"<<j<<"----------------------------------------"<<endl;
+        //NOTE 这里应该是非实时的关键所在    这里只是为了保证精确度，所以去掉也是没有关系的。
+        while (!SLAM.bLocalMapAcceptKF())
+        {
+            bstop = true;
+        };
+        //if(bstop)
+        //  break;
     }
+    delete [] fullPath;
+    delete [] fullPathR;
+    SLAM.SaveKeyFrameTrajectoryNavState(config._tmpFilePath +argv[7]+ "_StereoVioKeyframe.txt");// from body(IMU) to world.
+    // Save camera trajectory
+    SLAM.SaveTrajectoryTUM(config._tmpFilePath + argv[7]+"_StereoVio.txt"); //from cam to world.
+    // Tracking time statistics
+    sort(vTimesTrack.begin(), vTimesTrack.end());
+    float totaltime = 0;
+    for (int ni = 0; ni < nImages; ni++)
+    {
+        totaltime += vTimesTrack[ni];
+    }
+    cout << "-------" << endl << endl;
+    cout << "median tracking time: " << vTimesTrack[nImages / 2] << endl;
+    cout << "mean tracking time: " << totaltime / nImages << endl;
+
+
+
+
+    cout << endl << endl << "press any key to shutdown" << endl;
+    getchar();
 
     // Stop all threads
     SLAM.Shutdown();
-
-    // Tracking time statistics
-    sort(vTimesTrack.begin(),vTimesTrack.end());
-    float totaltime = 0;
-    for(int ni=0; ni<nImages; ni++)
-    {
-        totaltime+=vTimesTrack[ni];
-    }
-    cout << "-------" << endl << endl;
-    cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
-    cout << "mean tracking time: " << totaltime/nImages << endl;
-
-    // Save camera trajectory
-     SLAM.SaveKeyFrameTrajectoryNavState(config._tmpFilePath+"KeyFrameNavStateTrajectory.txt");
-
     return 0;
-}
-
-void LoadImages(const string &strImagePath, const string &strPathTimes,
-                vector<string> &vstrImages, vector<double> &vTimeStamps)
-{
-    ifstream fTimes;
-    fTimes.open(strPathTimes.c_str());
-    vTimeStamps.reserve(5000);
-    vstrImages.reserve(5000);
-    while(!fTimes.eof())
-    {
-        string s;
-        getline(fTimes,s);
-        if(!s.empty())
-        {
-            stringstream ss;
-            ss << s;
-            vstrImages.push_back(strImagePath + "/" + ss.str() + ".png");
-            double t;
-            ss >> t;
-            vTimeStamps.push_back(t/1e9);
-
-        }
-    }
-}
-
-void LoadIMUData(const string &strIMUDataFilePath, std::vector<ORB_SLAM2::IMUData>& vimuData)
-{
-    ifstream fIMUdata;
-    fIMUdata.open(strIMUDataFilePath.c_str());
-
-    if (!fIMUdata.good()) {
-      std::cout<<"Can not read: "<<strIMUDataFilePath<<std::endl;
-      return ;
-    }
-    
-    std::string line;
-    int cnt = 0;
-     while (std::getline(fIMUdata, line))
-     {
-        std::stringstream  ss;
-        ORB_SLAM2::IMUData Imu;
-        std::stringstream stream(line);
-        std::string s;
-        std::getline(stream, s, ',');
-        ss<<s;
-        double t;
-        ss>>t;
-
-        Imu._t = t/1e9;
-
-        for (int j = 0; j < 3; ++j) {
-          std::getline(stream, s, ',');
-          std::stringstream  ssg;
-          ssg<<s;
-          double g_ele;
-          ssg>>g_ele;
-          Imu._g[j] = g_ele;
-
-        }
-        for (int j = 0; j < 3; ++j) {
-          std::getline(stream, s, ',');
-          std::stringstream  ssa;
-          ssa<<s;
-          double a_ele;
-          ssa>> a_ele;
-          Imu._a[j] = a_ele;
-
-        }
-        //std::cout<< Imu._a.transpose()<<std::endl;
-        vimuData.push_back(Imu);
-	
-    }
 }
 
