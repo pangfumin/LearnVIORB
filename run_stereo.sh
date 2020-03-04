@@ -1,0 +1,1 @@
+./build/euroc_VIO_stereo ./Vocabulary/ORBvoc.bin ./config/Stereoeuroc.yaml  /home/pang/dataset/euroc/MH_01_easy/mav0/imu0/data.csv /home/pang/dataset/euroc/MH_01_easy/mav0/cam0/data.csv /home/pang/dataset/euroc/MH_01_easy/mav0/cam0/data /home/pang/dataset/euroc/MH_01_easy/mav0/cam1/data test_mh01
