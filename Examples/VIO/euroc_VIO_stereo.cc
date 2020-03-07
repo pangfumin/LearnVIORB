@@ -359,10 +359,10 @@ int main(int argc, char **argv)
         bool bstop = false;
         //cout<<"----------------------------------"<<j<<"----------------------------------------"<<endl;
         //NOTE 这里应该是非实时的关键所在    这里只是为了保证精确度，所以去掉也是没有关系的。
-        while (!SLAM.bLocalMapAcceptKF())
-        {
-            bstop = true;
-        };
+//        while (!SLAM.bLocalMapAcceptKF())
+//        {
+//            bstop = true;
+//        };
         //if(bstop)
         //  break;
     }

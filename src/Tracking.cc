@@ -1619,7 +1619,11 @@ bool Tracking::NeedNewKeyFrame()
     // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
     const bool c2 = ((mnMatchesInliers<nRefMatches*thRefRatio|| bNeedToInsertClose) && mnMatchesInliers>15);
 
-    if( ((c1a||c1b||c1c)&&c2) || cTimeGap )
+    // NOTE(Pang):
+    // Remove the cTimeGap check. If the local mapping thread is busy, do not insert a new KF into queue,
+    // since this may cause crash when local mapping thread is doing VINS initialization.
+    //
+    if( ((c1a||c1b||c1c)&&c2) /* || cTimeGap */ )
     {
         // If the mapping accepts keyframes, insert keyframe.
         // Otherwise send a signal to interrupt BA
@@ -1629,15 +1633,15 @@ bool Tracking::NeedNewKeyFrame()
         }
         else
         {
-            mpLocalMapper->InterruptBA();
-            if(mSensor!=System::MONOCULAR)
-            {
-                if(mpLocalMapper->KeyframesInQueue()<3)
-                    return true;
-                else
-                    return false;
-            }
-            else
+//            mpLocalMapper->InterruptBA();
+//            if(mSensor!=System::MONOCULAR)
+//            {
+//                if(mpLocalMapper->KeyframesInQueue()<3)
+//                    return true;
+//                else
+//                    return false;
+//            }
+//            else
                 return false;
         }
     }

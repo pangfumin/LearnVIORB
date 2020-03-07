@@ -978,6 +978,8 @@ void LocalMapping::Run()
             // BoW conversion and insertion in Map
             ProcessNewKeyFrame();
 
+            //usleep(30000);
+
             // Check recent MapPoints
             MapPointCulling();
 
@@ -1012,7 +1014,7 @@ void LocalMapping::Run()
                 if(!GetVINSInited())
                 {
                      bool tmpbool;
-                    
+
                      if(!mbMonocular)
                      {
                          tmpbool=TryInitStereoVIO();//如果是不是单目，则scale为1
@@ -1021,7 +1023,7 @@ void LocalMapping::Run()
                      {
                          tmpbool = TryInitVIO();//单目的vio初始化
                      }
-                              
+
                     SetVINSInited(tmpbool);
                     if(tmpbool)
                     {

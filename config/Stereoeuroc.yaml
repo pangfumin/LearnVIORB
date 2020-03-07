@@ -47,7 +47,7 @@ Camera.Tbc:
   0.0, 0.0, 0.0, 1.0]
 
 # Local Window size
-LocalMapping.LocalWindowSize: 7
+LocalMapping.LocalWindowSize: 10
 
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
@@ -134,7 +134,7 @@ RIGHT.P:  !!opencv-matrix
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 600
+ORBextractor.nFeatures: 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	
 ORBextractor.scaleFactor: 1.2
