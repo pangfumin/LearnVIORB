@@ -1061,14 +1061,12 @@ void Tracking::StereoInitialization()
         mCurrentFrame.SetPose(cv::Mat::eye(4,4,CV_32F));
 
         // Create KeyFrame
-        // KeyFrame* pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB);
-//rocky  for stereo vio
-//TODO  这里应该是mvIMUSinceLastKF.back()
+
         vector<IMUData> vimu1;
-        vimu1.push_back(mvIMUSinceLastKF.back());
-        KeyFrame* pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB, vimu1, NULL);
+
+        KeyFrame* pKFini = new KeyFrame(mCurrentFrame, mpMap, mpKeyFrameDB, mvIMUSinceLastKF, NULL);
         pKFini->ComputePreInt();
-// Clear IMUData buffer
+
         mvIMUSinceLastKF.clear();
         pKFini->ComputeBoW();
 

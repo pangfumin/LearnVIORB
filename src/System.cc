@@ -150,7 +150,6 @@ cv::Mat System::TrackMonoVI(const cv::Mat &im, const std::vector<IMUData> &vimu,
 }
 
 
-//这里输入的都是矫正之后的图像
 cv::Mat System::TrackStereoVI(const cv::Mat &imLeft, const cv::Mat &imRight, const std::vector<IMUData> &vimu, const double &timestamp)
 {
     if(mSensor!=STEREO)

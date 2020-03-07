@@ -138,9 +138,9 @@ ${LAPACK_LIBRARIES}
 #target_link_libraries(bin_vocabulary ${PROJECT_NAME})
 
 add_executable(euroc_VIO
-        Examples/VIO/euroc_VIO.cc)
+        Examples/VI_slam/euroc_VIO.cc)
 target_link_libraries(euroc_VIO ${PROJECT_NAME})
 
 add_executable(euroc_VIO_stereo
-        Examples/VIO/euroc_VIO_stereo.cc)
+        Examples/VI_slam/euroc_VIO_stereo.cc)
 target_link_libraries(euroc_VIO_stereo ${PROJECT_NAME})
